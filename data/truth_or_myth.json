@@ -1,0 +1,51 @@
+[
+    {
+        "id": 1,
+        "statement": "Incognito mode hides your activity from Google completely. \ud83d\udd75\ufe0f",
+        "answer": "myth",
+        "explanation": "Nope! Incognito only hides history locally. Your ISP, employer & even Google can still see your activity!",
+        "emoji": "\ud83d\udd75\ufe0f\u200d\u2642\ufe0f"
+    },
+    {
+        "id": 2,
+        "statement": "Deleting browsing history permanently erases all your data. \ud83d\uddd1\ufe0f",
+        "answer": "myth",
+        "explanation": "Clearing local history doesn't delete Google's server-side copies. Check myactivity.google.com to see what they have!",
+        "emoji": "\ud83d\udcbe"
+    },
+    {
+        "id": 3,
+        "statement": "Google Maps works without internet using offline maps. \ud83d\uddfa\ufe0f",
+        "answer": "truth",
+        "explanation": "TRUE! You can download area maps for offline use. Perfect for travel abroad where data roaming is expensive!",
+        "emoji": "\ud83d\uddfa\ufe0f"
+    },
+    {
+        "id": 4,
+        "statement": "Google Photos gives unlimited free storage forever. \u2601\ufe0f",
+        "answer": "myth",
+        "explanation": "This used to be true! Google ended unlimited free storage in June 2021. Now it's 15 GB shared across Gmail, Drive & Photos.",
+        "emoji": "\ud83d\udcf8"
+    },
+    {
+        "id": 5,
+        "statement": "YouTube listens to your conversations to show ads. \ud83c\udfa4",
+        "answer": "myth",
+        "explanation": "It feels like it! But it's just scary-good targeting using your search & watch history. No mic access needed.",
+        "emoji": "\ud83d\udc42"
+    },
+    {
+        "id": 6,
+        "statement": "Chrome extensions can steal your passwords & data. \ud83d\udd10",
+        "answer": "truth",
+        "explanation": "TRUE and very scary! Malicious extensions have actually stolen user data. Always check permissions carefully!",
+        "emoji": "\ud83e\udde9"
+    },
+    {
+        "id": 7,
+        "statement": "Dark mode saves battery on every phone. \ud83c\udf19",
+        "answer": "myth",
+        "explanation": "Only on OLED/AMOLED screens! LCD phones use the same power regardless of colours displayed.",
+        "emoji": "\ud83c\udf19"
+    }
+]

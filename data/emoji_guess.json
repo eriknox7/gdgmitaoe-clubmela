@@ -1,0 +1,90 @@
+[
+    {
+        "id": 1,
+        "emojis": "\ud83d\udce7 \ud83d\udd35\ud83d\udd34\ud83d\udfe1\ud83d\udfe2",
+        "answer": "Gmail",
+        "options": [
+            "Gmail",
+            "Outlook",
+            "Yahoo Mail"
+        ],
+        "hint": "Google's iconic colourful email app"
+    },
+    {
+        "id": 2,
+        "emojis": "\ud83d\uddfa\ufe0f \ud83d\udccd",
+        "answer": "Google Maps",
+        "options": [
+            "Google Maps",
+            "Waze",
+            "Apple Maps"
+        ],
+        "hint": "Never get lost again"
+    },
+    {
+        "id": 3,
+        "emojis": "\u25b6\ufe0f \ud83d\udd34",
+        "answer": "YouTube",
+        "options": [
+            "YouTube",
+            "Netflix",
+            "Twitch"
+        ],
+        "hint": "The world's biggest video platform"
+    },
+    {
+        "id": 4,
+        "emojis": "\ud83d\udcc1 \u2601\ufe0f",
+        "answer": "Google Drive",
+        "options": [
+            "Google Drive",
+            "Dropbox",
+            "OneDrive"
+        ],
+        "hint": "15 GB free cloud storage from Google"
+    },
+    {
+        "id": 5,
+        "emojis": "\ud83c\udfa5 \ud83d\udcac",
+        "answer": "Google Meet",
+        "options": [
+            "Google Meet",
+            "Zoom",
+            "Microsoft Teams"
+        ],
+        "hint": "Video calls made by Google"
+    },
+    {
+        "id": 6,
+        "emojis": "\ud83d\uddbc\ufe0f \u2601\ufe0f",
+        "answer": "Google Photos",
+        "options": [
+            "Google Photos",
+            "iCloud Photos",
+            "Gallery"
+        ],
+        "hint": "It used to be free forever \ud83d\ude22"
+    },
+    {
+        "id": 7,
+        "emojis": "\ud83c\udf0d \ud83d\udd0e",
+        "answer": "Google Chrome",
+        "options": [
+            "Google Chrome",
+            "Firefox",
+            "Safari"
+        ],
+        "hint": "The browser that eats RAM for breakfast"
+    },
+    {
+        "id": 8,
+        "emojis": "\ud83d\udcc5 \ud83e\udd16",
+        "answer": "Google Calendar",
+        "options": [
+            "Google Calendar",
+            "Outlook Calendar",
+            "Notion"
+        ],
+        "hint": "Never miss a GDG event!"
+    }
+]

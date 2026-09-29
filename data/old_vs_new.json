@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "product_a": {
+            "name": "Orkut",
+            "emoji": "\ud83e\udd1d",
+            "year": 2004
+        },
+        "product_b": {
+            "name": "Gmail",
+            "emoji": "\ud83d\udce7",
+            "year": 2004
+        },
+        "older": "a",
+        "fact": "Both launched in 2004! Orkut came just 2 months before Gmail in the same legendary year!"
+    },
+    {
+        "id": 2,
+        "product_a": {
+            "name": "Google Maps",
+            "emoji": "\ud83d\uddfa\ufe0f",
+            "year": 2005
+        },
+        "product_b": {
+            "name": "YouTube",
+            "emoji": "\u25b6\ufe0f",
+            "year": 2005
+        },
+        "older": "a",
+        "fact": "Google Maps launched in Feb 2005, YouTube in April 2005 \u2014 same year, Maps was 2 months earlier!"
+    },
+    {
+        "id": 3,
+        "product_a": {
+            "name": "Android",
+            "emoji": "\ud83e\udd16",
+            "year": 2008
+        },
+        "product_b": {
+            "name": "iPhone",
+            "emoji": "\ud83d\udcf1",
+            "year": 2007
+        },
+        "older": "b",
+        "fact": "iPhone launched June 2007 \u2014 Android OS came a year later in 2008. Apple got there first!"
+    },
+    {
+        "id": 4,
+        "product_a": {
+            "name": "Google Meet",
+            "emoji": "\ud83c\udfa5",
+            "year": 2017
+        },
+        "product_b": {
+            "name": "Zoom",
+            "emoji": "\ud83d\udcbb",
+            "year": 2013
+        },
+        "older": "b",
+        "fact": "Zoom launched in 2013! Meet only came in 2017, but dominated during COVID \ud83e\udda0"
+    },
+    {
+        "id": 5,
+        "product_a": {
+            "name": "Google+",
+            "emoji": "\u2795",
+            "year": 2011
+        },
+        "product_b": {
+            "name": "Instagram",
+            "emoji": "\ud83d\udcf8",
+            "year": 2010
+        },
+        "older": "b",
+        "fact": "Instagram launched Oct 2010. Google+ arrived in 2011 and then died in 2019 \ud83d\udc94"
+    },
+    {
+        "id": 6,
+        "product_a": {
+            "name": "Google Assistant",
+            "emoji": "\ud83e\udd16",
+            "year": 2016
+        },
+        "product_b": {
+            "name": "Siri",
+            "emoji": "\ud83c\udf4e",
+            "year": 2011
+        },
+        "older": "b",
+        "fact": "Siri launched with iPhone 4S in 2011. Google Assistant came 5 years later in 2016!"
+    },
+    {
+        "id": 7,
+        "product_a": {
+            "name": "Blogger",
+            "emoji": "\u270d\ufe0f",
+            "year": 1999
+        },
+        "product_b": {
+            "name": "Medium",
+            "emoji": "\ud83d\udcd6",
+            "year": 2012
+        },
+        "older": "a",
+        "fact": "Blogger is from 1999! Google bought it in 2003. Medium is a 2012 baby \ud83d\udc76"
+    },
+    {
+        "id": 8,
+        "product_a": {
+            "name": "Chrome",
+            "emoji": "\ud83c\udf10",
+            "year": 2008
+        },
+        "product_b": {
+            "name": "Firefox",
+            "emoji": "\ud83e\udd8a",
+            "year": 2004
+        },
+        "older": "b",
+        "fact": "Firefox launched in 2004. Chrome came in 2008 and then ate Firefox's lunch \ud83d\ude02"
+    }
+]

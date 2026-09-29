@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tech Truth or Myth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: #0f0f1a;
+      color: #fff;
+      overflow-x: hidden
+    }
+
+    /* animations */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(.6)
+      }
+
+      70% {
+        transform: scale(1.08)
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    @keyframes floatY {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    @keyframes flipIn {
+      from {
+        transform: rotateY(90deg);
+        opacity: 0
+      }
+
+      to {
+        transform: rotateY(0deg);
+        opacity: 1
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      15% {
+        transform: translateX(-10px)
+      }
+
+      30% {
+        transform: translateX(10px)
+      }
+
+      45% {
+        transform: translateX(-8px)
+      }
+
+      60% {
+        transform: translateX(8px)
+      }
+
+      75% {
+        transform: translateX(-4px)
+      }
+
+      90% {
+        transform: translateX(4px)
+      }
+    }
+
+    @keyframes flashRed {
+
+      0%,
+      100% {
+        background: none
+      }
+
+      50% {
+        background: rgba(234, 67, 53, .18)
+      }
+    }
+
+    .slide-up {
+      animation: slideUp .45s ease both
+    }
+
+    .pop-in {
+      animation: popIn .4s cubic-bezier(.4, 2, .6, 1) both
+    }
+
+    .float {
+      animation: floatY 3s ease-in-out infinite
+    }
+
+    .shake {
+      animation: shake .55s cubic-bezier(.36, .07, .19, .97) both
+    }
+
+    .flash-red {
+      animation: flashRed .7s ease both
+    }
+
+    /* shimmer bg */
+    .shimmer {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)
+    }
+
+    /* g-text gradient */
+    .g-text {
+      background: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent
+    }
+
+    /* flip card */
+    .perspective {
+      perspective: 1000px
+    }
+
+    .flip-card-inner {
+      transition: transform .7s cubic-bezier(.4, 2, .6, 1);
+      transform-style: preserve-3d;
+      position: relative
+    }
+
+    .flipped .flip-card-inner {
+      transform: rotateY(180deg)
+    }
+
+    .flip-card-front,
+    .flip-card-back {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between
+    }
+
+    .flip-card-back {
+      transform: rotateY(180deg)
+    }
+
+    /* hud */
+    #hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(10, 10, 10, .82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 40px;
+      padding: 8px 18px 8px 12px;
+      font-size: .8rem;
+      font-weight: 700;
+      transition: background .4s
+    }
+
+    #hud.warning {
+      background: rgba(234, 67, 53, .88);
+      animation: pulse-w 1s ease-in-out infinite
+    }
+
+    @keyframes pulse-w {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 24px rgba(234, 67, 53, .4)
+      }
+
+      50% {
+        box-shadow: 0 4px 40px rgba(234, 67, 53, .8)
+      }
+    }
+
+    #ring-svg {
+      transform: rotate(-90deg);
+      width: 36px;
+      height: 36px
+    }
+
+    #ring-fill {
+      fill: none;
+      stroke: #FBBC05;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 88;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .4s
+    }
+
+    #hud.warning #ring-fill {
+      stroke: #fff
+    }
+
+    #ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .12);
+      stroke-width: 3
+    }
+
+    #timer-text {
+      font-size: 1rem;
+      font-weight: 900;
+      color: #fff;
+      min-width: 48px;
+      text-align: right
+    }
+
+    #game-label {
+      font-size: .7rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .5);
+      border-right: 1px solid rgba(255, 255, 255, .12);
+      padding-right: 10px;
+      margin-right: 2px;
+      white-space: nowrap
+    }
+
+    /* timesup overlay */
+    #timesup-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(10, 10, 10, .92);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .6s ease;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      padding: 24px
+    }
+
+    #timesup-overlay.show {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .tu-icon {
+      font-size: 5rem;
+      margin-bottom: 16px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .2s both
+    }
+
+    .tu-title {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .35s both
+    }
+
+    .tu-bar {
+      width: 60px;
+      height: 5px;
+      border-radius: 4px;
+      background: #FBBC05;
+      margin: 20px auto 8px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .45s both
+    }
+
+    .tu-sub {
+      font-size: 1rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .5);
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .5s both
+    }
+
+    /* screens */
+    .screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .screen.hidden {
+      display: none
+    }
+
+    /* buttons */
+    .btn {
+      border: none;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      border-radius: 16px;
+      transition: transform .1s, box-shadow .1s;
+      color: #fff
+    }
+
+    .btn:active {
+      transform: scale(.94)
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: default
+    }
+
+    /* progress bar */
+    .prog-track {
+      width: 100%;
+      background: rgba(255, 255, 255, .1);
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden
+    }
+
+    .prog-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .7s;
+      background: linear-gradient(90deg, #4285F4, #34A853)
+    }
+
+    /* vote buttons */
+    .vote-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px
+    }
+
+    .vote-btn {
+      padding: 20px 12px;
+      border-radius: 20px;
+      font-size: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px
+    }
+
+    .vote-btn.selected-truth {
+      outline: 4px solid #34A853
+    }
+
+    .vote-btn.selected-myth {
+      outline: 4px solid #EA4335
+    }
+
+    /* Score submission modal */
+    #submit-modal {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity .4s ease;
+    }
+    #submit-modal.show { opacity: 1; pointer-events: all; }
+    .submit-card {
+      background: linear-gradient(135deg,#1a1a2e,#16213e);
+      border: 1px solid rgba(255,255,255,.12); border-radius: 28px;
+      padding: 32px 24px; width: 100%; max-width: 360px; text-align: center;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .submit-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; }
+    .submit-sub { color: rgba(255,255,255,.5); font-size: .85rem; margin-bottom: 20px; }
+    .submit-input {
+      width: 100%; padding: 14px 16px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07);
+      color: #fff; font-family: 'Poppins',sans-serif; font-size: 1rem;
+      font-weight: 600; margin-bottom: 12px; outline: none; transition: border .2s;
+    }
+    .submit-input:focus { border-color: rgba(255,255,255,.4); }
+    .submit-input::placeholder { color: rgba(255,255,255,.3); font-weight: 400; }
+    .submit-btn {
+      width: 100%; padding: 15px; border-radius: 14px; border: none;
+      font-family: 'Poppins',sans-serif; font-size: 1rem; font-weight: 700;
+      color: #fff; cursor: pointer; margin-top: 4px; transition: opacity .2s, transform .1s;
+    }
+    .submit-btn:active { transform: scale(.97); }
+    .submit-btn:disabled { opacity: .5; cursor: default; }
+    .submit-status { margin-top: 12px; font-size: .85rem; font-weight: 600; min-height: 20px; }
+    .skip-link {
+      display: block; margin-top: 14px; color: rgba(255,255,255,.3);
+      font-size: .8rem; cursor: pointer; text-decoration: underline;
+    }
+    .skip-link:hover { color: rgba(255,255,255,.6); }
+  </style>
+</head>
+
+<body>
+
+  <!-- Floating HUD timer -->
+  <div id="hud">
+    <span id="game-label">🧠 Tech Truth or Myth</span>
+    <svg id="ring-svg" viewBox="0 0 36 36">
+      <circle id="ring-bg" cx="18" cy="18" r="14" />
+      <circle id="ring-fill" cx="18" cy="18" r="14" />
+    </svg>
+    <span id="timer-text">5:00</span>
+  </div>
+
+  <!-- Time's Up overlay -->
+  <div id="timesup-overlay">
+    <div class="tu-icon">⏰</div>
+    <div class="tu-title">Time's Up!</div>
+    <div class="tu-bar"></div>
+    <div class="tu-sub">Head back to the admin to submit your score.</div>
+  </div>
+
+  <!-- SPLASH -->
+  <div id="screen-splash" class="screen shimmer">
+    <div class="slide-up" style="text-align:center;max-width:360px;width:100%">
+      <div class="float" style="font-size:4.5rem;margin-bottom:12px">🧠</div>
+      <div style="display:flex;justify-content:center;gap:2px;font-size:1.6rem;font-weight:900;margin-bottom:8px">
+        <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span
+          style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span
+          style="color:#EA4335">e</span>
+      </div>
+      <h1 style="font-size:1.8rem;font-weight:900;line-height:1.2;margin-bottom:8px">Tech Truth<br />or Myth?</h1>
+      <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:28px">Can you tell fact from fiction? 10 random
+        tech statements — vote with the crowd! 🔥</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:28px">
+        <div style="width:12px;height:12px;border-radius:50%;background:#4285F4"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#EA4335"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#FBBC05"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#34A853"></div>
+      </div>
+      <button class="btn" id="start-btn"
+        style="width:100%;padding:16px;font-size:1.1rem;background:linear-gradient(135deg,#4285F4,#0d47a1)">
+        Let's Play! 🚀
+      </button>
+      <p style="color:rgba(255,255,255,.3);font-size:.75rem;margin-top:12px">10 random questions every round • No time
+        limit • Just vibes ✨</p>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen hidden shimmer" style="justify-content:flex-start;padding:0">
+    <div style="width:100%;max-width:420px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:12px">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:2px;font-size:1.3rem;font-weight:900">
+          <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span
+            style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span
+            style="color:#EA4335">e</span>
+        </div>
+        <div id="q-counter"
+          style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:999px;font-size:.85rem;font-weight:700">
+          1/10</div>
+      </div>
+      <!-- Progress -->
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill" style="width:10%"></div>
+      </div>
+      <!-- Score pill -->
+      <div style="display:flex;justify-content:center">
+        <div
+          style="background:rgba(255,255,255,.1);padding:6px 16px;border-radius:999px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:6px">
+          🏆 <span id="score-pill">0</span> pts
+        </div>
+      </div>
+      <!-- Flip card -->
+      <div class="perspective" id="card-wrap" style="position:relative">
+        <div class="flip-card-inner" id="flip-inner" style="min-height:220px">
+          <div class="flip-card-front" id="card-front" style="background:linear-gradient(135deg,#1a1a2e,#16213e)">
+            <div id="q-emoji" style="font-size:2.5rem;text-align:center">🧠</div>
+            <p id="q-statement" style="font-size:1rem;font-weight:600;text-align:center;line-height:1.5"></p>
+          </div>
+          <div class="flip-card-back" id="card-back">
+            <div id="back-icon" style="font-size:2.5rem;text-align:center">✅</div>
+            <div id="back-verdict" style="text-align:center;font-size:1.4rem;font-weight:900;letter-spacing:2px"></div>
+            <div id="back-result" style="text-align:center;font-size:.85rem;font-weight:700"></div>
+            <p id="back-explanation"
+              style="font-size:.82rem;color:rgba(255,255,255,.8);text-align:center;line-height:1.5"></p>
+          </div>
+        </div>
+      </div>
+      <!-- Vote buttons -->
+      <div class="vote-grid" id="vote-area">
+        <button class="btn vote-btn" id="btn-truth" style="background:linear-gradient(135deg,#0d3320,#34A853)"
+          onclick="handleVote('truth')">
+          <span style="font-size:2rem">✅</span><span>TRUTH</span>
+        </button>
+        <button class="btn vote-btn" id="btn-myth" style="background:linear-gradient(135deg,#3d0f0f,#EA4335)"
+          onclick="handleVote('myth')">
+          <span style="font-size:2rem">❌</span><span>MYTH</span>
+        </button>
+      </div>
+      <!-- Next button -->
+      <button class="btn hidden pop-in" id="next-btn"
+        style="padding:16px;font-size:1rem;background:linear-gradient(135deg,#4285F4,#0d47a1)" onclick="handleNext()">
+        Next Question →
+      </button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div id="screen-final" class="screen hidden shimmer" style="text-align:center">
+    <div class="slide-up" style="max-width:360px;width:100%">
+      <div id="final-emoji" style="font-size:4.5rem;margin-bottom:12px">🎉</div>
+      <h2 style="font-size:2rem;font-weight:900;margin-bottom:4px">Game Over!</h2>
+      <p id="final-msg" style="color:rgba(255,255,255,.6);margin-bottom:20px"></p>
+      <div style="background:rgba(255,255,255,.1);border-radius:24px;padding:24px;margin-bottom:20px">
+        <div class="g-text" id="final-score" style="font-size:3.5rem;font-weight:900">0/10</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.85rem;margin-top:4px">correct answers</div>
+        <div class="prog-track" style="margin-top:16px">
+          <div class="prog-fill" id="final-bar" style="width:0%;transition:width 1s ease"></div>
+        </div>
+        <div id="final-pct" style="color:rgba(255,255,255,.5);font-size:.75rem;margin-top:6px">0%</div>
+      </div>
+      <button class="btn" id="restart-btn"
+        style="width:100%;padding:16px;font-size:1rem;background:linear-gradient(135deg,#4285F4,#0d47a1)"
+        onclick="restartGame()">
+        Play Again 🔄
+      </button>
+      <p style="color:rgba(255,255,255,.25);font-size:.72rem;margin-top:16px">
+        🛠️ Created by <span style="color:rgba(255,255,255,.45);font-weight:700">Mahir Mulani</span> · Tech Team Member
+      </p>
+    </div>
+  </div>
+
+  <div id="submit-modal">
+    <div class="submit-card">
+      <div style="font-size:2.5rem;margin-bottom:8px">🏆</div>
+      <div class="submit-title">Submit Your Score!</div>
+      <div class="submit-sub">Enter your details to register on the leaderboard</div>
+      <div id="submit-score-display" style="font-size:2rem;font-weight:900;margin-bottom:20px"></div>
+      <input class="submit-input" id="submit-name" type="text" placeholder="Your name" maxlength="50" autocomplete="off"/>
+      <input class="submit-input" id="submit-phone" type="tel" placeholder="Phone number" maxlength="15" autocomplete="off"/>
+      <button class="submit-btn" id="submit-btn" onclick="submitScore()" style="background:linear-gradient(135deg,#4285F4,#0d47a1)">Submit Score 🚀</button>
+      <div class="submit-status" id="submit-status"></div>
+      <span class="skip-link" onclick="closeSubmitModal()">Skip, just play again</span>
+    </div>
+  </div>
+
+  <script>
+    // ── Data ──────────────────────────────────────────────────────────────────────
+    const ALL_QUESTIONS = [
+      { id: 1, statement: "Incognito mode hides your activity from Google completely. 🕵️", answer: "myth", explanation: "Nope! 😬 Incognito only hides history from others on the same device. Your ISP, employer & Google can still see what you're browsing!", emoji: "🕵️‍♂️" },
+      { id: 2, statement: "Deleting your browsing history permanently erases all your data. 🗑️", answer: "myth", explanation: "Big myth! 💀 Google keeps your activity data on its servers. Check myactivity.google.com to see what they actually have!", emoji: "💾" },
+      { id: 3, statement: "Google Maps can work without internet using offline maps. 🗺️", answer: "truth", explanation: "TRUE! ✅ Download any area for offline use — search → tap Download. Perfect for trips or bad signal zones!", emoji: "🗺️" },
+      { id: 4, statement: "Google Photos gives unlimited free storage forever. ☁️", answer: "myth", explanation: "It used to be! Google killed free unlimited storage in June 2021. Now it's 15 GB shared across Gmail, Drive & Photos. 😭", emoji: "📸" },
+      { id: 5, statement: "YouTube listens to your conversations to show you ads. 🎙️", answer: "myth", explanation: "Feels like it but it's just scary-good targeting! Google uses search history, watch patterns & location — not your mic. 👀", emoji: "👂" },
+      { id: 6, statement: "Chrome extensions can steal your passwords and data. 🔐", answer: "truth", explanation: "TRUE and scary! 😱 Malicious extensions have actually stolen login data. Always check permissions & install only from trusted publishers!", emoji: "🧩" },
+      { id: 7, statement: "Dark mode saves battery on every type of phone. 🌙", answer: "myth", explanation: "Only on OLED/AMOLED screens! 📱 LCD phones use the same power regardless of colour. iPhone before XR? Zero savings lol.", emoji: "🌙" },
+      { id: 8, statement: "Google owns YouTube. 📺", answer: "truth", explanation: "TRUE! 💰 Google acquired YouTube in October 2006 for a whopping $1.65 billion — considered one of the best deals in tech history!", emoji: "▶️" },
+      { id: 9, statement: "Gmail was launched on April Fool's Day as a joke announcement. 📧", answer: "truth", explanation: "TRUE! 🤡 Google announced Gmail on April 1st, 2004 with 1 GB of storage. People thought it WAS a joke — 1 GB was wild back then!", emoji: "📅" },
+      { id: 10, statement: "Android is completely open source software. 🤖", answer: "truth", explanation: "TRUE! ✅ AOSP (Android Open Source Project) is free for anyone to use and modify. That's why so many devices run Android!", emoji: "🤖" },
+      { id: 11, statement: "Google was founded in a garage. 🏠", answer: "truth", explanation: "TRUE! 🏠 Larry Page and Sergey Brin started Google in Susan Wojcicki's garage in Menlo Park in 1998. Classic Silicon Valley story!", emoji: "🏠" },
+      { id: 12, statement: "Google Images was created because of Jennifer Lopez's iconic green Versace dress at the 2000 Grammys. 👗", answer: "truth", explanation: "TRUE! 💚 People searched for J.Lo's dress so much that it crashed Google's search. Eric Schmidt said this literally inspired Google Images!", emoji: "👗" },
+      { id: 13, statement: "You can use Google Translate without internet in offline mode. 🌐", answer: "truth", explanation: "TRUE! ✅ Download language packs in the app settings. Works great when you're travelling abroad without data!", emoji: "🗣️" },
+      { id: 14, statement: "Google Earth shows you real-time live satellite images. 🛰️", answer: "myth", explanation: "MYTH! 😆 Google Earth images are typically 1-3 years old! Real-time satellite imagery would cost insane amounts of bandwidth.", emoji: "🌍" },
+      { id: 15, statement: "Private/Incognito browsing protects you from malware and viruses. 🦠", answer: "myth", explanation: "MYTH! 💀 Incognito only clears local history. You can still download viruses, get phished, or be hacked in incognito mode!", emoji: "🦠" },
+      { id: 16, statement: "Google Lens can identify plants, animals, and food. 🌺", answer: "truth", explanation: "TRUE! 🌿 Google Lens uses AI to identify plants, animals, food, landmarks, QR codes and even solve math problems! Insanely useful.", emoji: "📷" },
+      { id: 17, statement: "You can unsend a Gmail email using the 'Undo Send' feature. ↩️", answer: "truth", explanation: "TRUE! ✅ Enable Undo Send in Gmail settings (up to 30 seconds). Saved countless embarrassing emails! 😂", emoji: "✉️" },
+      { id: 18, statement: "Google Search is case-sensitive — 'Python' and 'python' give different results. 🔍", answer: "myth", explanation: "MYTH! 🤦 Google Search is NOT case-sensitive. 'PYTHON', 'Python', and 'python' all give the same results!", emoji: "🔎" },
+      { id: 19, statement: "Google was originally called 'BackRub'. 🔙", answer: "truth", explanation: "TRUE! 😂 Larry Page and Sergey Brin named their search engine 'BackRub' in 1996 because it analyzed backlinks. Thank god they renamed it!", emoji: "🏷️" },
+      { id: 20, statement: "WhatsApp is owned by Google. 💬", answer: "myth", explanation: "MYTH! 📱 WhatsApp is owned by Meta (formerly Facebook). Zuckerberg bought it in 2014 for $19 billion — the biggest acquisition in Meta history!", emoji: "💚" },
+      { id: 21, statement: "Google Meet has a 60-minute time limit for free users. ⏱️", answer: "truth", explanation: "TRUE! ⏰ Free Google accounts get 60-minute meetings for 3+ participants. After that… silence. Upgrade to Workspace for longer calls!", emoji: "🎥" },
+      { id: 22, statement: "You can recover permanently deleted Gmail emails within 30 days. 🗑️", answer: "truth", explanation: "TRUE! ✅ Deleted emails go to Trash first (30 days). Even after emptying Trash, Google may recover them for up to 30 more days via support!", emoji: "📬" },
+      { id: 23, statement: "Google is the parent company of Alphabet. 🏢", answer: "myth", explanation: "MYTH! 🔄 It's actually the other way — Alphabet Inc is the parent company of Google! Created in 2015, Alphabet owns Google, Waymo, DeepMind, etc.", emoji: "🏗️" },
+      { id: 24, statement: "Google processes over 8 billion searches every single day. 🔍", answer: "truth", explanation: "TRUE! 📊 Google handles roughly 8.5 billion searches daily — that's about 99,000 searches every second. Absolutely mind-blowing scale!", emoji: "📈" },
+      { id: 25, statement: "Files shared with you on Google Drive count against YOUR storage. 📁", answer: "myth", explanation: "MYTH! 🎉 Only files YOU own count against your storage quota. Files others share with you don't use your space at all!", emoji: "☁️" },
+      { id: 26, statement: "Google deletes accounts that have been inactive for 2+ years. 🗑️", answer: "truth", explanation: "TRUE as of December 2023! 🔑 Google now deletes inactive accounts after 2 years. Log in occasionally to keep your account alive!", emoji: "⏳" },
+      { id: 27, statement: "YouTube Shorts videos can now be up to 3 minutes long. 📱", answer: "truth", explanation: "TRUE! ✅ YouTube extended Shorts from 60 seconds to 3 minutes in 2024, competing directly with TikTok's longer video format!", emoji: "🎬" },
+      { id: 28, statement: "Google Bard AI assistant was renamed to Gemini. 🤖", answer: "truth", explanation: "TRUE! ✨ Google rebranded Bard to Gemini in February 2024. It's also the name of Google's underlying AI model — Gemini Ultra, Pro, and Nano!", emoji: "♊" },
+      { id: 29, statement: "Pixel phones are made and sold by Google directly. 📱", answer: "truth", explanation: "TRUE! 📱 Google designs and sells Pixel phones as their own hardware line since 2016. They run 'pure Android' with exclusive Google AI features!", emoji: "🏭" },
+      { id: 30, statement: "Google Street View covers every country in the world. 🚗", answer: "myth", explanation: "MYTH! 🌍 Several countries restrict or ban Street View — including North Korea, Bhutan, and parts of India. Not every corner is mapped!", emoji: "📍" },
+      { id: 31, statement: "You can schedule emails to be sent later in Gmail. 📬", answer: "truth", explanation: "TRUE! ✅ Compose email → click arrow next to Send → 'Schedule send'. Perfect for sending work emails at professional hours 😎", emoji: "⏰" },
+      { id: 32, statement: "Gmail allows attachments of up to 25MB per email. 📎", answer: "truth", explanation: "TRUE! 📎 Gmail's limit is 25MB per email. Larger files automatically get converted to Google Drive links. Smart workaround!", emoji: "📂" },
+      { id: 33, statement: "Google owns DeepMind, the AI research lab. 🧠", answer: "truth", explanation: "TRUE! 🧠 Google/Alphabet acquired DeepMind in 2014. It's behind AlphaGo, AlphaFold, and now merged into Google DeepMind — world-class AI!", emoji: "🔬" },
+      { id: 34, statement: "2-Step Verification makes your Google account 100% hack-proof. 🔒", answer: "myth", explanation: "MYTH! 😤 2FA massively improves security but isn't infallible. SIM swapping, phishing, and session hijacking can still bypass it!", emoji: "🛡️" },
+      { id: 35, statement: "Google Fi is Google's own mobile phone carrier/network. 📡", answer: "truth", explanation: "TRUE! 📡 Google Fi is a wireless carrier that uses networks from T-Mobile, US Cellular, and Wi-Fi calling. Only in the USA though!", emoji: "📶" },
+      { id: 36, statement: "Android was originally created inside Google by Google engineers. 🤖", answer: "myth", explanation: "MYTH! 🔍 Android was founded as a separate startup by Andy Rubin in 2003. Google ACQUIRED Android Inc. in 2005 for $50 million!", emoji: "🏗️" },
+      { id: 37, statement: "Chromebooks can work offline without internet access. 💻", answer: "truth", explanation: "TRUE! ✅ Many apps like Google Docs, Gmail, and Google Drive work offline on Chromebook. Files sync when you reconnect!", emoji: "⚡" },
+      { id: 38, statement: "Google Assistant can make real phone calls on your behalf using AI voice. 📞", answer: "truth", explanation: "TRUE! 📞 Google Duplex can call restaurants and salons to make reservations, speaking naturally with real humans. Launched in 2018!", emoji: "🤙" },
+      { id: 39, statement: "Chrome uses more RAM than other browsers on the same computer. 🐏", answer: "truth", explanation: "TRUE! 💻 Chrome is notorious for RAM hunger — each tab runs as a separate process for security. More tabs = more RAM gone 😂", emoji: "🖥️" },
+      { id: 40, statement: "Google Search gives the same results to everyone around the world. 🌐", answer: "myth", explanation: "MYTH! 🌍 Google personalizes results based on location, search history, language, and device. Two people Googling the same thing can get different results!", emoji: "🔀" },
+      { id: 41, statement: "YouTube was founded by ex-PayPal employees. 💳", answer: "truth", explanation: "TRUE! 👨‍💻 Chad Hurley, Steve Chen, and Jawed Karim — all former PayPal employees — created YouTube in 2005. Jawed made the first-ever YouTube video!", emoji: "🏦" },
+      { id: 42, statement: "Google Docs saves your work automatically in real-time. 💾", answer: "truth", explanation: "TRUE! ✅ Google Docs autosaves to Drive automatically — no Ctrl+S needed. Every version is saved in revision history too!", emoji: "📝" },
+      { id: 43, statement: "You can say 'Hey Google' to wake Google Assistant even when your phone screen is off. 📵", answer: "truth", explanation: "TRUE! 🎤 With 'Hey Google' always-on detection enabled, it listens even when screen is off. Uses minimal power through the ambient processor!", emoji: "🔊" },
+      { id: 44, statement: "Google Maps collects real-time traffic data from Android users' GPS location. 📍", answer: "truth", explanation: "TRUE! 🚦 Millions of Android users sharing anonymous location data create Google Maps' legendary real-time traffic. You're a sensor in the network!", emoji: "🗺️" },
+      { id: 45, statement: "Gmail reads your emails to show you personalized ads (as of 2024). 📧", answer: "myth", explanation: "MYTH now! 🎉 Google stopped scanning Gmail for targeted ads in 2017 after massive public backlash. They still analyze for features like Smart Reply though!", emoji: "🔏" },
+      { id: 46, statement: "Waymo (self-driving cars) is owned by Google. 🚗", answer: "truth", explanation: "TRUE! 🤖🚗 Waymo started as Google's self-driving car project in 2009. It became a separate Alphabet subsidiary in 2016. They operate driverless robotaxis!", emoji: "🏎️" },
+      { id: 47, statement: "Google Translate is highly accurate for all world languages. 🌍", answer: "myth", explanation: "MYTH! 😂 Google Translate is great for major languages but struggles badly with less-resourced ones. Always double-check important translations!", emoji: "🗣️" },
+      { id: 48, statement: "Chrome Incognito still allows websites to see your IP address. 🌐", answer: "truth", explanation: "TRUE! 🕵️ Websites can still see your IP, operating system, browser type, and even fingerprint you in incognito. You're NOT anonymous!", emoji: "💻" },
+      { id: 49, statement: "You can recover files deleted from Google Drive within 30 days. 🗑️", answer: "truth", explanation: "TRUE! ✅ Deleted Drive files go to Trash for 30 days before permanent deletion. During that window, just restore them from Trash!", emoji: "📁" },
+      { id: 50, statement: "Google Photos can automatically identify and group people by their face. 👥", answer: "truth", explanation: "TRUE! 🧑‍🤝‍🧑 Google Photos uses face recognition to create People albums — group everyone with the same face. Super useful and slightly creepy 👀", emoji: "😊" },
+      { id: 51, statement: "Android apps can now run natively on Windows 11 computers. 💻", answer: "truth", explanation: "TRUE! 🤝 Windows 11 introduced Windows Subsystem for Android. You can run many Android apps directly on Windows from the Amazon Appstore!", emoji: "🪟" },
+      { id: 52, statement: "Google has a physical retail store where you can buy Pixel phones. 🏪", answer: "truth", explanation: "TRUE! 🏬 Google opened its first permanent retail store in New York City in 2021. You can try Pixel phones, Chromebooks, and more!", emoji: "🛒" },
+      { id: 53, statement: "You can add a custom business domain to Gmail completely for free. 📧", answer: "myth", explanation: "MYTH! 💸 Custom domains (like you@yourcompany.com) require Google Workspace, which is a paid subscription starting at $6/user/month!", emoji: "🌐" },
+      { id: 54, statement: "Google Pay can be used to make payments at physical stores via NFC. 💳", answer: "truth", explanation: "TRUE! 👆 Tap your phone at any NFC-enabled payment terminal. Google Pay works at millions of stores globally — contactless and secure!", emoji: "📲" },
+      { id: 55, statement: "Google Scholar only shows research papers published by Google researchers. 🎓", answer: "myth", explanation: "MYTH! 📚 Google Scholar indexes millions of academic papers, theses, books, and articles from researchers worldwide — not just Google employees!", emoji: "🔬" },
+    ];
+
+    // ── Timer ─────────────────────────────────────────────────────────────────────
+    const ENDS_AT = {{ ends_at }};
+    const TOTAL = Math.max(1, Math.round((ENDS_AT - Date.now()) / 1000));
+    const CIRCUMF = 88;
+    function getRemaining() { return Math.max(0, Math.round((ENDS_AT - Date.now()) / 1000)); }
+    let remaining = getRemaining();
+    const ringFill = document.getElementById('ring-fill');
+    const timerText = document.getElementById('timer-text');
+    const hud = document.getElementById('hud');
+    const timesupOverlay = document.getElementById('timesup-overlay');
+
+    function fmtTime(s) { const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}` }
+    timerText.textContent = fmtTime(TOTAL);
+    const hudInterval = setInterval(() => {
+      remaining = getRemaining();
+      timerText.textContent = fmtTime(remaining);
+      ringFill.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL);
+      if (remaining <= 60) hud.classList.add('warning');
+      if (remaining <= 0) { clearInterval(hudInterval); timesupOverlay.classList.add('show') }
+    }, 1000);
+
+    // ── Game state ────────────────────────────────────────────────────────────────
+    let questions = [], index = 0, chosen = null, revealed = false, score = 0;
+
+    function pick10(arr) { return [...arr].sort(() => Math.random() - .5).slice(0, 10) }
+    function showScreen(id) { ['splash', 'game', 'final'].forEach(s => document.getElementById('screen-' + s).classList.toggle('hidden', s !== id)) }
+
+    function startGame() {
+      questions = pick10(ALL_QUESTIONS);
+      index = 0; chosen = null; revealed = false; score = 0;
+      showScreen('game');
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = questions[index];
+      // header
+      document.getElementById('q-counter').textContent = `${index + 1}/${questions.length}`;
+      document.getElementById('prog-fill').style.width = `${((index + 1) / questions.length) * 100}%`;
+      document.getElementById('score-pill').textContent = score;
+      // card front
+      document.getElementById('q-emoji').textContent = q.emoji;
+      document.getElementById('q-statement').textContent = q.statement;
+      // reset card state
+      const flipInner = document.getElementById('flip-inner');
+      flipInner.classList.remove('flipped', 'shake', 'flash-red');
+      void flipInner.offsetWidth; // force reflow to restart animation
+      document.getElementById('card-back').style.background = q.answer === 'truth'
+        ? 'linear-gradient(135deg,#0d3320,#1a5c38)' : 'linear-gradient(135deg,#3d0f0f,#5c1a1a)';
+      document.getElementById('back-icon').textContent = q.answer === 'truth' ? '✅' : '❌';
+      document.getElementById('back-verdict').textContent = q.answer === 'truth' ? 'TRUTH!' : 'MYTH!';
+      document.getElementById('back-verdict').style.color = q.answer === 'truth' ? '#34A853' : '#EA4335';
+      document.getElementById('back-explanation').textContent = q.explanation;
+      // reset buttons
+      const btnT = document.getElementById('btn-truth');
+      const btnM = document.getElementById('btn-myth');
+      btnT.classList.remove('selected-truth', 'selected-myth'); btnT.style.opacity = '1'; btnT.disabled = false;
+      btnM.classList.remove('selected-truth', 'selected-myth'); btnM.style.opacity = '1'; btnM.disabled = false;
+      document.getElementById('next-btn').classList.add('hidden');
+      document.getElementById('vote-area').classList.remove('hidden');
+      chosen = null; revealed = false;
+    }
+
+    function handleVote(vote) {
+      if (chosen) return;
+      chosen = vote;
+      const isCorrect = vote === questions[index].answer;
+      if (isCorrect) score++;
+      // style buttons
+      const btnT = document.getElementById('btn-truth');
+      const btnM = document.getElementById('btn-myth');
+      btnT.disabled = true; btnM.disabled = true;
+      if (vote === 'truth') { btnT.classList.add('selected-truth'); btnM.style.opacity = '.4' }
+      else { btnM.classList.add('selected-myth'); btnT.style.opacity = '.4' }
+      // immediately reveal
+      revealAnswer(isCorrect);
+    }
+
+    function revealAnswer(isCorrect) {
+      if (revealed) return;
+      revealed = true;
+      const flipInner = document.getElementById('flip-inner');
+      if (isCorrect) {
+        flipInner.classList.add('flipped');
+        confetti({ particleCount: 80, spread: 70, origin: { y: .5 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] });
+        document.getElementById('back-result').textContent = '🎉 You got it right!';
+      } else {
+        // flash red & shake, then flip to show the real answer
+        flipInner.classList.add('shake', 'flash-red');
+        setTimeout(() => flipInner.classList.add('flipped'), 600);
+        document.getElementById('back-result').textContent = '💀 Gotcha!';
+      }
+      document.getElementById('next-btn').classList.remove('hidden');
+      document.getElementById('next-btn').textContent = index + 1 >= questions.length ? 'See Results 🏁' : 'Next Question →';
+    }
+
+    function handleNext() {
+      if (index + 1 >= questions.length) { showFinal(); return }
+      index++; renderQuestion();
+    }
+
+    function showFinal() {
+      const pct = Math.round((score / questions.length) * 100);
+      const msg = pct === 100 ? "Absolute legend! 🏆" : pct >= 70 ? "Not bad, tech nerd! 😎" : pct >= 40 ? "Mid... but we believe in you 🤣" : "Google it next time 💀";
+      const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🎉' : pct >= 40 ? '😅' : '💀';
+      document.getElementById('final-emoji').textContent = emoji;
+      document.getElementById('final-msg').textContent = msg;
+      document.getElementById('final-score').textContent = `${score}/${questions.length}`;
+      document.getElementById('final-pct').textContent = `${pct}%`;
+      showScreen('final');
+      setTimeout(()=>showSubmitModal(score,questions.length,'Tech Truth or Myth'),800);
+      setTimeout(() => { document.getElementById('final-bar').style.width = `${pct}%` }, 100);
+      const end = Date.now() + 2500;
+      const fire = () => { if (Date.now() < end) { confetti({ particleCount: 40, spread: 80, origin: { y: .6 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] }); requestAnimationFrame(fire) } };
+      fire();
+    }
+
+    function restartGame() { startGame() }
+
+    let _pendingScore=0,_pendingTotal=0,_pendingGame='';
+    function showSubmitModal(score,total,gameName){
+      _pendingScore=score;_pendingTotal=total;_pendingGame=gameName;
+      document.getElementById('submit-score-display').textContent=score+'/'+total;
+      document.getElementById('submit-name').value='';
+      document.getElementById('submit-phone').value='';
+      document.getElementById('submit-status').textContent='';
+      document.getElementById('submit-btn').disabled=false;
+      document.getElementById('submit-modal').classList.add('show');
+      setTimeout(()=>document.getElementById('submit-name').focus(),400);
+    }
+    function closeSubmitModal(){
+      document.getElementById('submit-modal').classList.remove('show');
+    }
+    async function submitScore(){
+      const name=document.getElementById('submit-name').value.trim();
+      const phone=document.getElementById('submit-phone').value.trim();
+      const status=document.getElementById('submit-status');
+      const btn=document.getElementById('submit-btn');
+      if(!name){status.style.color='#EA4335';status.textContent='Please enter your name.';return;}
+      if(!phone){status.style.color='#EA4335';status.textContent='Please enter your phone number.';return;}
+      btn.disabled=true;
+      status.style.color='rgba(255,255,255,.5)';
+      status.textContent='Submitting...';
+      try{
+        const res=await fetch('/api/submit_score',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name,phone,score:_pendingScore,total:_pendingTotal,game:_pendingGame})
+        });
+        const data=await res.json();
+        if(res.ok){
+          status.style.color='#34A853';
+          status.textContent='Score submitted! ✅';
+          setTimeout(closeSubmitModal,1500);
+        }else{
+          status.style.color='#EA4335';
+          status.textContent='❌ '+(data.error||'Failed. Try again.');
+          btn.disabled=false;
+        }
+      }catch(e){
+        status.style.color='#EA4335';
+        status.textContent='❌ Network error. Try again.';
+        btn.disabled=false;
+      }
+    }
+
+    // Wire up static buttons
+    document.getElementById('start-btn').onclick = startGame;
+  </script>
+</body>
+
+</html>

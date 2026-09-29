@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Old vs New Tech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: #0f0f1a;
+      color: #fff;
+      overflow-x: hidden
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(.6)
+      }
+
+      70% {
+        transform: scale(1.08)
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    @keyframes floatY {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    @keyframes pulse-urgent {
+
+      0%,
+      100% {
+        transform: scale(1)
+      }
+
+      50% {
+        transform: scale(1.05)
+      }
+    }
+
+    .slide-up {
+      animation: slideUp .45s ease both
+    }
+
+    .pop-in {
+      animation: popIn .4s cubic-bezier(.4, 2, .6, 1) both
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    .float {
+      animation: floatY 3s ease-in-out infinite
+    }
+
+    .shimmer {
+      background: linear-gradient(135deg, #0f0f1a 0%, #16213e 50%, #0f3460 100%)
+    }
+
+    /* hud */
+    #hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(10, 10, 10, .82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 40px;
+      padding: 8px 18px 8px 12px;
+      font-size: .8rem;
+      font-weight: 700;
+      transition: background .4s
+    }
+
+    #hud.warning {
+      background: rgba(234, 67, 53, .88);
+      animation: pulse-w 1s ease-in-out infinite
+    }
+
+    @keyframes pulse-w {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 24px rgba(234, 67, 53, .4)
+      }
+
+      50% {
+        box-shadow: 0 4px 40px rgba(234, 67, 53, .8)
+      }
+    }
+
+    #ring-svg {
+      transform: rotate(-90deg);
+      width: 36px;
+      height: 36px
+    }
+
+    #ring-fill {
+      fill: none;
+      stroke: #4285F4;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 88;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .4s
+    }
+
+    #hud.warning #ring-fill {
+      stroke: #fff
+    }
+
+    #ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .12);
+      stroke-width: 3
+    }
+
+    #timer-text {
+      font-size: 1rem;
+      font-weight: 900;
+      color: #fff;
+      min-width: 48px;
+      text-align: right
+    }
+
+    #game-label {
+      font-size: .7rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .5);
+      border-right: 1px solid rgba(255, 255, 255, .12);
+      padding-right: 10px;
+      margin-right: 2px;
+      white-space: nowrap
+    }
+
+    /* timesup */
+    #timesup-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(10, 10, 10, .92);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .6s ease;
+      text-align: center;
+      padding: 24px
+    }
+
+    #timesup-overlay.show {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .tu-icon {
+      font-size: 5rem;
+      margin-bottom: 16px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .2s both
+    }
+
+    .tu-title {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .35s both
+    }
+
+    .tu-bar {
+      width: 60px;
+      height: 5px;
+      border-radius: 4px;
+      background: #4285F4;
+      margin: 20px auto 8px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .45s both
+    }
+
+    .tu-sub {
+      font-size: 1rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .5);
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .5s both
+    }
+
+    /* screens */
+    .screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .screen.hidden {
+      display: none
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      border-radius: 16px;
+      transition: transform .1s, box-shadow .1s;
+      color: #fff
+    }
+
+    .btn:active {
+      transform: scale(.94)
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: default
+    }
+
+    .prog-track {
+      width: 100%;
+      background: rgba(255, 255, 255, .1);
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden
+    }
+
+    .prog-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .7s;
+      background: linear-gradient(90deg, #FBBC05, #34A853)
+    }
+
+    /* product card */
+    .prod-btn {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all .3s;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      color: #fff
+    }
+
+    .prod-btn:disabled {
+      cursor: default
+    }
+
+    .prod-btn.correct {
+      transform: scale(1.04);
+      outline: 4px solid #34A853;
+      background: linear-gradient(135deg, #0d3320, #34A853) !important
+    }
+
+    .prod-btn.wrong {
+      opacity: .6;
+      transform: scale(.96);
+      background: linear-gradient(135deg, #3d0f0f, #EA4335) !important
+    }
+
+    .prod-btn.reveal {
+      background: linear-gradient(135deg, #1a3a1a, #2d5a2d) !important
+    }
+
+    /* timer ring inline */
+    .timer-ring {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .urgent {
+      animation: pulse-urgent .8s ease-in-out infinite
+    }
+
+    #submit-modal {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity .4s ease;
+    }
+    #submit-modal.show { opacity: 1; pointer-events: all; }
+    .submit-card {
+      background: linear-gradient(135deg,#1a1a2e,#16213e);
+      border: 1px solid rgba(255,255,255,.12); border-radius: 28px;
+      padding: 32px 24px; width: 100%; max-width: 360px; text-align: center;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .submit-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; }
+    .submit-sub { color: rgba(255,255,255,.5); font-size: .85rem; margin-bottom: 20px; }
+    .submit-input {
+      width: 100%; padding: 14px 16px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07);
+      color: #fff; font-family: 'Poppins',sans-serif; font-size: 1rem;
+      font-weight: 600; margin-bottom: 12px; outline: none; transition: border .2s;
+    }
+    .submit-input:focus { border-color: rgba(255,255,255,.4); }
+    .submit-input::placeholder { color: rgba(255,255,255,.3); font-weight: 400; }
+    .submit-btn {
+      width: 100%; padding: 15px; border-radius: 14px; border: none;
+      font-family: 'Poppins',sans-serif; font-size: 1rem; font-weight: 700;
+      color: #fff; cursor: pointer; margin-top: 4px; transition: opacity .2s, transform .1s;
+    }
+    .submit-btn:active { transform: scale(.97); }
+    .submit-btn:disabled { opacity: .5; cursor: default; }
+    .submit-status { margin-top: 12px; font-size: .85rem; font-weight: 600; min-height: 20px; }
+    .skip-link {
+      display: block; margin-top: 14px; color: rgba(255,255,255,.3);
+      font-size: .8rem; cursor: pointer; text-decoration: underline;
+    }
+    .skip-link:hover { color: rgba(255,255,255,.6); }
+  </style>
+</head>
+
+<body>
+
+  <div id="hud">
+    <span id="game-label">🕹️ Old vs New Tech</span>
+    <svg id="ring-svg" viewBox="0 0 36 36">
+      <circle id="ring-bg" cx="18" cy="18" r="14" />
+      <circle id="ring-fill" cx="18" cy="18" r="14" />
+    </svg>
+    <span id="timer-text">5:00</span>
+  </div>
+
+  <div id="timesup-overlay">
+    <div class="tu-icon">⏰</div>
+    <div class="tu-title">Time's Up!</div>
+    <div class="tu-bar"></div>
+    <div class="tu-sub">Head back to the admin to submit your score.</div>
+  </div>
+
+  <!-- SPLASH -->
+  <div id="screen-splash" class="screen shimmer">
+    <div class="slide-up" style="text-align:center;max-width:360px;width:100%">
+      <div class="float" style="font-size:4.5rem;margin-bottom:12px">⏱️</div>
+      <div style="display:flex;justify-content:center;gap:2px;font-size:1.6rem;font-weight:900;margin-bottom:8px">
+        <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span
+          style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span
+          style="color:#EA4335">e</span>
+      </div>
+      <h1 style="font-size:1.8rem;font-weight:900;line-height:1.2;margin-bottom:8px">Old vs New<br />Tech Rapid Fire!
+      </h1>
+      <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:20px">Two tech products appear — you have 5
+        seconds to guess which one is OLDER! ⚡</p>
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:24px;text-align:left">
+        <p
+          style="font-size:.7rem;color:rgba(255,255,255,.4);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+          How to play</p>
+        <p style="font-size:.85rem;color:rgba(255,255,255,.8);line-height:1.8">👁️ See two products<br />⏳ Timer starts
+          immediately<br />👆 Tap the OLDER one<br />📅 See the reveal!</p>
+      </div>
+      <button class="btn" id="start-btn"
+        style="width:100%;padding:16px;font-size:1.1rem;background:linear-gradient(135deg,#FBBC05,#f57c00);color:#1a1a1a">
+        Start Rapid Fire! ⚡
+      </button>
+      <p style="color:rgba(255,255,255,.3);font-size:.75rem;margin-top:12px">10 rounds • 5 seconds each • No mercy 😈
+      </p>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen hidden shimmer" style="justify-content:flex-start;padding:0">
+    <div style="width:100%;max-width:420px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:2px;font-size:1.2rem;font-weight:900">
+          <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span
+            style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span
+            style="color:#EA4335">e</span>
+        </div>
+        <div id="q-counter"
+          style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:999px;font-size:.85rem;font-weight:700">
+          1/10</div>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill" style="width:10%"></div>
+      </div>
+      <!-- Title + per-question timer row -->
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <p style="color:rgba(255,255,255,.4);font-size:.7rem;text-transform:uppercase;letter-spacing:2px">Which came
+            first?</p>
+          <p style="font-weight:700;font-size:1rem">Tap the OLDER one 👇</p>
+        </div>
+        <!-- Per-question countdown ring -->
+        <div id="q-timer-wrap" class="timer-ring">
+          <svg width="64" height="64" style="transform:rotate(-90deg)">
+            <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5" />
+            <circle id="q-ring" cx="32" cy="32" r="26" fill="none" stroke="#FBBC05" stroke-width="5"
+              stroke-linecap="round" stroke-dasharray="163" stroke-dashoffset="0"
+              style="transition:stroke-dasharray 1s linear,stroke .3s" />
+          </svg>
+          <span id="q-time-num" style="position:absolute;font-weight:900;font-size:1.1rem;color:#FBBC05">5</span>
+        </div>
+        <div id="score-pill-wrap" class="hidden"
+          style="background:rgba(255,255,255,.1);padding:6px 14px;border-radius:999px;font-size:.85rem;font-weight:600">
+          🏆 <span id="score-pill">0</span> pts
+        </div>
+      </div>
+      <!-- Product cards -->
+      <div id="cards-wrap" style="display:flex;flex-direction:column;gap:10px">
+        <button class="prod-btn slide-up" id="btn-a" onclick="handlePick('a')"
+          style="background:linear-gradient(135deg,#1a1a2e,#16213e)">
+          <span id="emoji-a" style="font-size:3rem">⏱️</span>
+          <span id="name-a" style="font-weight:900;font-size:1.2rem"></span>
+          <span id="year-a" class="hidden" style="font-size:.85rem;font-weight:700;color:#34A853"></span>
+        </button>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;border-top:1px solid rgba(255,255,255,.1)"></div>
+          <span
+            style="color:rgba(255,255,255,.35);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:2px">vs</span>
+          <div style="flex:1;border-top:1px solid rgba(255,255,255,.1)"></div>
+        </div>
+        <button class="prod-btn slide-up" id="btn-b" onclick="handlePick('b')"
+          style="background:linear-gradient(135deg,#1a1a2e,#16213e);animation-delay:.1s">
+          <span id="emoji-b" style="font-size:3rem">⏱️</span>
+          <span id="name-b" style="font-weight:900;font-size:1.2rem"></span>
+          <span id="year-b" class="hidden" style="font-size:.85rem;font-weight:700;color:#34A853"></span>
+        </button>
+      </div>
+      <!-- Reveal info box -->
+      <div id="reveal-box" class="pop-in hidden"
+        style="background:rgba(255,255,255,.08);border-radius:20px;padding:16px;text-align:center">
+        <p id="reveal-verdict" style="font-weight:700;font-size:1rem;margin-bottom:4px"></p>
+        <p id="reveal-fact" style="color:rgba(255,255,255,.7);font-size:.82rem;line-height:1.5"></p>
+      </div>
+      <button class="btn hidden pop-in" id="next-btn"
+        style="padding:14px;font-size:1rem;background:linear-gradient(135deg,#FBBC05,#f57c00);color:#1a1a1a"
+        onclick="handleNext()">
+        Next Round →
+      </button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div id="screen-final" class="screen hidden shimmer" style="text-align:center">
+    <div class="slide-up" style="max-width:360px;width:100%">
+      <div id="final-emoji" style="font-size:4.5rem;margin-bottom:12px">🏆</div>
+      <h2 style="font-size:2rem;font-weight:900;margin-bottom:4px">Times Up!</h2>
+      <p id="final-msg" style="color:rgba(255,255,255,.6);margin-bottom:20px"></p>
+      <div style="background:rgba(255,255,255,.1);border-radius:24px;padding:24px;margin-bottom:20px">
+        <div id="final-score"
+          style="font-size:3.5rem;font-weight:900;background:linear-gradient(90deg,#4285F4,#FBBC05);-webkit-background-clip:text;background-clip:text;color:transparent">
+          0/10</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.85rem;margin-top:4px">correct guesses</div>
+        <div class="prog-track" style="margin-top:16px">
+          <div class="prog-fill" id="final-bar"
+            style="width:0%;background:linear-gradient(90deg,#FBBC05,#34A853);transition:width 1s ease"></div>
+        </div>
+      </div>
+      <button class="btn" id="restart-btn"
+        style="width:100%;padding:16px;font-size:1rem;background:linear-gradient(135deg,#FBBC05,#f57c00);color:#1a1a1a"
+        onclick="restartGame()">
+        Play Again ⚡
+      </button>
+      <p style="color:rgba(255,255,255,.25);font-size:.72rem;margin-top:16px">
+        🛠️ Created by <span style="color:rgba(255,255,255,.45);font-weight:700">Mahir Mulani</span> · Tech Team Member
+      </p>
+    </div>
+  </div>
+
+  <div id="submit-modal">
+    <div class="submit-card">
+      <div style="font-size:2.5rem;margin-bottom:8px">🏆</div>
+      <div class="submit-title">Submit Your Score!</div>
+      <div class="submit-sub">Enter your details to register on the leaderboard</div>
+      <div id="submit-score-display" style="font-size:2rem;font-weight:900;margin-bottom:20px"></div>
+      <input class="submit-input" id="submit-name" type="text" placeholder="Your name" maxlength="50" autocomplete="off"/>
+      <input class="submit-input" id="submit-phone" type="tel" placeholder="Phone number" maxlength="15" autocomplete="off"/>
+      <button class="submit-btn" id="submit-btn" onclick="submitScore()" style="background:linear-gradient(135deg,#4285F4,#0d47a1)">Submit Score 🚀</button>
+      <div class="submit-status" id="submit-status"></div>
+      <span class="skip-link" onclick="closeSubmitModal()">Skip, just play again</span>
+    </div>
+  </div>
+
+
+  <script>
+    const ALL_PAIRS = [
+      { id: 1, a: { name: 'Orkut', emoji: '🫂', year: 2004 }, b: { name: 'Gmail', emoji: '📧', year: 2004 }, older: 'a', fact: "Both 2004! Orkut launched January, Gmail April — same year, Orkut was 3 months first! 😮" },
+      { id: 2, a: { name: 'Google Maps', emoji: '🗺️', year: 2005 }, b: { name: 'YouTube', emoji: '▶️', year: 2005 }, older: 'a', fact: "Google Maps launched Feb 2005, YouTube April 2005 — same year, Maps 2 months earlier! 🤯" },
+      { id: 3, a: { name: 'Android', emoji: '🤖', year: 2008 }, b: { name: 'iPhone', emoji: '📱', year: 2007 }, older: 'b', fact: "iPhone dropped June 2007! Android OS came a full year later September 2008. Apple got there first! 😤" },
+      { id: 4, a: { name: 'Google Meet', emoji: '🎥', year: 2017 }, b: { name: 'Zoom', emoji: '💻', year: 2013 }, older: 'b', fact: "Zoom launched January 2013! Google Meet only came March 2017, 4 years later. But Meet dominated COVID! 📈" },
+      { id: 5, a: { name: 'Google+', emoji: '➕', year: 2011 }, b: { name: 'Instagram', emoji: '📸', year: 2010 }, older: 'b', fact: "Instagram launched October 2010. Google+ arrived June 2011. Google+ died 2019 — rest in pixels 💀" },
+      { id: 6, a: { name: 'Google Assistant', emoji: '🤖', year: 2016 }, b: { name: 'Siri', emoji: '🍎', year: 2011 }, older: 'b', fact: "Siri launched with iPhone 4S October 2011. Google Assistant came 5 years later in 2016! Siri was first, Google was better 😂" },
+      { id: 7, a: { name: 'Blogger', emoji: '✍️', year: 1999 }, b: { name: 'Medium', emoji: '📖', year: 2012 }, older: 'a', fact: "Blogger launched 1999 — it's OG! Google acquired it 2003. Medium is a 2012 baby 👴" },
+      { id: 8, a: { name: 'Chrome', emoji: '🌐', year: 2008 }, b: { name: 'Firefox', emoji: '🦊', year: 2004 }, older: 'b', fact: "Firefox launched November 2004. Chrome came September 2008 and took over the internet 🌍" },
+      { id: 9, a: { name: 'WhatsApp', emoji: '💚', year: 2009 }, b: { name: 'Telegram', emoji: '✈️', year: 2013 }, older: 'a', fact: "WhatsApp launched November 2009. Telegram came August 2013 — WhatsApp is the OG messaging! 💬" },
+      { id: 10, a: { name: 'Facebook', emoji: '📘', year: 2004 }, b: { name: 'Twitter/X', emoji: '🐦', year: 2006 }, older: 'a', fact: "Facebook launched February 2004 from a Harvard dorm. Twitter came March 2006 — 2 years later! 🎓" },
+      { id: 11, a: { name: 'Google', emoji: '🔍', year: 1998 }, b: { name: 'Yahoo!', emoji: '🟣', year: 1995 }, older: 'b', fact: "Yahoo! launched March 1995, 3 full years before Google in September 1998! Yahoo was king first 👑" },
+      { id: 12, a: { name: 'Spotify', emoji: '🟢', year: 2008 }, b: { name: 'Apple Music', emoji: '🎵', year: 2015 }, older: 'a', fact: "Spotify launched October 2008. Apple Music joined streaming wars June 2015 — 7 years later! Spotify pioneered it 🎶" },
+      { id: 13, a: { name: 'Snapchat', emoji: '👻', year: 2011 }, b: { name: 'TikTok', emoji: '🎵', year: 2016 }, older: 'a', fact: "Snapchat launched September 2011. TikTok came September 2016 — 5 years later! Snap invented Stories 📸" },
+      { id: 14, a: { name: 'LinkedIn', emoji: '💼', year: 2003 }, b: { name: 'Facebook', emoji: '📘', year: 2004 }, older: 'a', fact: "LinkedIn launched May 2003, nearly a year before Facebook February 2004! The professional network was first 👔" },
+      { id: 15, a: { name: 'Gmail', emoji: '📧', year: 2004 }, b: { name: 'Hotmail', emoji: '🔵', year: 1996 }, older: 'b', fact: "Hotmail launched 1996 — one of the first web emails! Gmail came 8 years later in 2004 with 1 GB storage 😤" },
+      { id: 16, a: { name: 'iPhone', emoji: '📱', year: 2007 }, b: { name: 'BlackBerry', emoji: '⌨️', year: 1999 }, older: 'b', fact: "BlackBerry smartphones started 1999! iPhone disrupted everything in 2007 — 8 years later. RIP BlackBerry 🥲" },
+      { id: 17, a: { name: 'Google Drive', emoji: '📁', year: 2012 }, b: { name: 'Dropbox', emoji: '💧', year: 2008 }, older: 'b', fact: "Dropbox pioneered cloud storage September 2008. Google Drive only launched April 2012 — Dropbox was 4 years first! 🌩️" },
+      { id: 18, a: { name: 'Zoom', emoji: '💻', year: 2013 }, b: { name: 'Skype', emoji: '🔵', year: 2003 }, older: 'b', fact: "Skype launched August 2003 — THE video call app for a decade! Zoom only came 2013, then COVID made it king 👑" },
+      { id: 19, a: { name: 'ChatGPT', emoji: '🤖', year: 2022 }, b: { name: 'Google Gemini', emoji: '♊', year: 2023 }, older: 'a', fact: "ChatGPT launched November 2022 and shocked the world! Gemini came as Google's response March 2023 — 4 months later! 🌍" },
+      { id: 20, a: { name: 'Reddit', emoji: '🔶', year: 2005 }, b: { name: 'Twitter/X', emoji: '🐦', year: 2006 }, older: 'a', fact: "Reddit launched June 2005, almost a year before Twitter March 2006! The front page of the internet was here first 🏠" },
+      { id: 21, a: { name: 'Pinterest', emoji: '📌', year: 2010 }, b: { name: 'Instagram', emoji: '📸', year: 2010 }, older: 'a', fact: "Pinterest launched January 2010, Instagram October 2010 — same year! Pinterest beat Instagram by 9 months 📌" },
+      { id: 22, a: { name: 'App Store', emoji: '🍎', year: 2008 }, b: { name: 'Play Store', emoji: '🤖', year: 2012 }, older: 'a', fact: "Apple App Store launched July 2008. Google Play Store came 2012 — Apple led by 4 years! 🏪" },
+      { id: 23, a: { name: 'Amazon Echo', emoji: '🔊', year: 2014 }, b: { name: 'Google Home', emoji: '🏠', year: 2016 }, older: 'a', fact: "Amazon Echo launched November 2014. Google Home came 2 years later — Amazon invented the smart speaker category! 🎙️" },
+      { id: 24, a: { name: 'Slack', emoji: '💬', year: 2013 }, b: { name: 'Discord', emoji: '🎮', year: 2015 }, older: 'a', fact: "Slack launched August 2013. Discord came May 2015 — Slack was 2 years first! Discord started for gamers, Slack for work 💼" },
+      { id: 25, a: { name: 'Vimeo', emoji: '🎬', year: 2004 }, b: { name: 'YouTube', emoji: '▶️', year: 2005 }, older: 'a', fact: "Vimeo was founded November 2004, YouTube February 2005 — Vimeo was FIRST! YouTube just became infinitely bigger 😂" },
+      { id: 26, a: { name: 'Google Pay', emoji: '💳', year: 2015 }, b: { name: 'Apple Pay', emoji: '🍎', year: 2014 }, older: 'b', fact: "Apple Pay launched October 2014. Google Pay (Android Pay) came September 2015. Apple launched mobile payments first! 💰" },
+      { id: 27, a: { name: 'Chrome', emoji: '🌐', year: 2008 }, b: { name: 'Internet Explorer', emoji: '🔵', year: 1995 }, older: 'b', fact: "Internet Explorer launched 1995 with Windows 95. Chrome came 13 years later and destroyed IE completely 💀" },
+      { id: 28, a: { name: 'Python', emoji: '🐍', year: 1991 }, b: { name: 'Java', emoji: '☕', year: 1995 }, older: 'a', fact: "Python was first released 1991! Java came 1995 — Python is 4 years older and now the most popular language! 📊" },
+      { id: 29, a: { name: 'React Native', emoji: '⚛️', year: 2015 }, b: { name: 'Flutter', emoji: '🦋', year: 2018 }, older: 'a', fact: "React Native launched March 2015. Flutter only came December 2018 — React Native pioneered cross-platform mobile! 📱" },
+      { id: 30, a: { name: 'Vine', emoji: '🎬', year: 2013 }, b: { name: 'TikTok', emoji: '🎵', year: 2016 }, older: 'a', fact: "Vine launched January 2013 and invented 6-second short videos. TikTok came 2016. Twitter killing Vine was a huge mistake 😭" },
+    ];
+
+    // ── Global HUD timer ──────────────────────────────────────────────────────────
+    const ENDS_AT = {{ ends_at }};
+    const TOTAL = Math.max(1, Math.round((ENDS_AT - Date.now()) / 1000));
+    const CIRCUMF = 88;
+    function getRemaining() { return Math.max(0, Math.round((ENDS_AT - Date.now()) / 1000)); }
+    let remaining = getRemaining();
+    const ringFill = document.getElementById('ring-fill');
+    const timerText = document.getElementById('timer-text');
+    const hud = document.getElementById('hud');
+    const timesupOverlay = document.getElementById('timesup-overlay');
+    function fmtTime(s) { const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}` }
+    timerText.textContent = fmtTime(TOTAL);
+    const hudInterval = setInterval(() => {
+      remaining = getRemaining(); timerText.textContent = fmtTime(remaining);
+      ringFill.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL);
+      if (remaining <= 60) hud.classList.add('warning');
+      if (remaining <= 0) { clearInterval(hudInterval); timesupOverlay.classList.add('show') }
+    }, 1000);
+
+
+    let pairs = [], index = 0, chosen = null, score = 0;
+    let qTimer = null, qSecs = 5;
+    const Q_CIRCUMF = 163; // 2π×26
+
+    function pick10(arr) { return [...arr].sort(() => Math.random() - .5).slice(0, 10) }
+    function showScreen(id) { ['splash', 'game', 'final'].forEach(s => document.getElementById('screen-' + s).classList.toggle('hidden', s !== id)) }
+
+    function startGame() {
+      pairs = pick10(ALL_PAIRS); index = 0; chosen = null; score = 0;
+      showScreen('game'); renderPair();
+    }
+
+    function startQTimer() {
+      clearInterval(qTimer); qSecs = 5;
+      updateQRing(5);
+      qTimer = setInterval(() => {
+        qSecs--; updateQRing(qSecs);
+        if (qSecs <= 0) { clearInterval(qTimer); handleTimeout() }
+      }, 1000);
+    }
+
+    function updateQRing(s) {
+      const prog = (s / 5) * Q_CIRCUMF;
+      const urgent = s <= 2;
+      document.getElementById('q-ring').style.strokeDasharray = `${prog} ${Q_CIRCUMF}`;
+      document.getElementById('q-ring').style.stroke = urgent ? '#EA4335' : '#FBBC05';
+      document.getElementById('q-time-num').textContent = s;
+      document.getElementById('q-time-num').style.color = urgent ? '#EA4335' : '#FBBC05';
+      const wrap = document.getElementById('q-timer-wrap');
+      urgent ? wrap.classList.add('urgent') : wrap.classList.remove('urgent');
+    }
+
+    function renderPair() {
+      const p = pairs[index];
+      document.getElementById('q-counter').textContent = `${index + 1}/${pairs.length}`;
+      document.getElementById('prog-fill').style.width = `${((index + 1) / pairs.length) * 100}%`;
+      // reset card a
+      const btnA = document.getElementById('btn-a');
+      btnA.className = 'prod-btn slide-up';
+      btnA.style.background = 'linear-gradient(135deg,#1a1a2e,#16213e)';
+      btnA.disabled = false;
+      document.getElementById('emoji-a').textContent = p.a.emoji;
+      document.getElementById('name-a').textContent = p.a.name;
+      const yearA = document.getElementById('year-a');
+      yearA.classList.add('hidden'); yearA.style.color = '#34A853';
+      // reset card b
+      const btnB = document.getElementById('btn-b');
+      btnB.className = 'prod-btn slide-up';
+      btnB.style.cssText = 'background:linear-gradient(135deg,#1a1a2e,#16213e);animation-delay:.1s';
+      btnB.disabled = false;
+      document.getElementById('emoji-b').textContent = p.b.emoji;
+      document.getElementById('name-b').textContent = p.b.name;
+      const yearB = document.getElementById('year-b');
+      yearB.classList.add('hidden'); yearB.style.color = '#34A853';
+      // reset UI
+      const revealBox = document.getElementById('reveal-box');
+      revealBox.classList.add('hidden');
+      document.getElementById('reveal-verdict').textContent = '';
+      document.getElementById('reveal-fact').textContent = '';
+      document.getElementById('next-btn').classList.add('hidden');
+      document.getElementById('q-timer-wrap').classList.remove('hidden');
+      document.getElementById('score-pill-wrap').classList.add('hidden');
+      chosen = null;
+      startQTimer();
+    }
+
+    function handleTimeout() {
+      chosen = 'timeout';
+      revealResult();
+    }
+
+    function handlePick(side) {
+      if (chosen) return;
+      clearInterval(qTimer);
+      chosen = side;
+      if (side === pairs[index].older) score++;
+      revealResult();
+    }
+
+    function revealResult() {
+      const p = pairs[index];
+      const btnA = document.getElementById('btn-a');
+      const btnB = document.getElementById('btn-b');
+      btnA.disabled = true; btnB.disabled = true;
+      const yA = document.getElementById('year-a');
+      const yB = document.getElementById('year-b');
+      const isCorrect = chosen === p.older;
+
+      // Mark chosen button
+      if (chosen === 'a') {
+        if (isCorrect) { btnA.classList.add('correct'); confetti({ particleCount: 60, spread: 70, origin: { y: .5 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] }) }
+        else { btnA.classList.add('wrong'); yA.textContent = `${p.a.year} ❌`; yA.style.color = '#EA4335'; yA.classList.remove('hidden'); }
+      }
+      if (chosen === 'b') {
+        if (isCorrect) { btnB.classList.add('correct'); confetti({ particleCount: 60, spread: 70, origin: { y: .5 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] }) }
+        else { btnB.classList.add('wrong'); yB.textContent = `${p.b.year} ❌`; yB.style.color = '#EA4335'; yB.classList.remove('hidden'); }
+      }
+      // Always highlight correct card with year
+      if (p.older === 'a') { btnA.classList.add('correct'); yA.textContent = `Launched ${p.a.year} 📅`; yA.style.color = '#34A853'; yA.classList.remove('hidden'); }
+      if (p.older === 'b') { btnB.classList.add('correct'); yB.textContent = `Launched ${p.b.year} 📅`; yB.style.color = '#34A853'; yB.classList.remove('hidden'); }
+      // reveal box
+      const verdict = chosen === 'timeout' ? '⏰ Time\'s up!' : isCorrect ? '🎉 Correct!' : '💀 Nope!';
+      document.getElementById('reveal-verdict').textContent = verdict;
+      document.getElementById('reveal-verdict').style.color = isCorrect ? '#34A853' : chosen === 'timeout' ? '#FBBC05' : '#EA4335';
+      document.getElementById('reveal-fact').textContent = p.fact;
+      document.getElementById('reveal-box').classList.remove('hidden');
+      // update score
+      document.getElementById('score-pill').textContent = score;
+      document.getElementById('q-timer-wrap').classList.add('hidden');
+      document.getElementById('score-pill-wrap').classList.remove('hidden');
+      // next btn
+      document.getElementById('next-btn').textContent = index + 1 >= pairs.length ? 'See Results 🏁' : 'Next Round →';
+      document.getElementById('next-btn').classList.remove('hidden');
+    }
+
+    function handleNext() {
+      if (index + 1 >= pairs.length) { showFinal(); return }
+      index++; renderPair();
+    }
+
+    function showFinal() {
+      clearInterval(qTimer);
+      const pct = Math.round((score / pairs.length) * 100);
+      const msg = pct === 100 ? "Time traveller vibes! 🚀" : pct >= 70 ? "History buff! 📚" : pct >= 40 ? "Not bad, not good 😅" : "Were you alive then? 💀";
+      document.getElementById('final-emoji').textContent = pct >= 70 ? '🏆' : pct >= 40 ? '😅' : '💀';
+      document.getElementById('final-msg').textContent = msg;
+      document.getElementById('final-score').textContent = `${score}/${pairs.length}`;
+      showScreen('final');
+      setTimeout(()=>showSubmitModal(score,pairs.length,'Old vs New Tech'),800);
+      setTimeout(() => { document.getElementById('final-bar').style.width = `${pct}%` }, 100);
+      const end = Date.now() + 2000;
+      const fire = () => { if (Date.now() < end) { confetti({ particleCount: 50, spread: 100, origin: { y: .5 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] }); requestAnimationFrame(fire) } };
+      fire();
+    }
+
+    let _pendingScore=0,_pendingTotal=0,_pendingGame='';
+    function showSubmitModal(score,total,gameName){
+      _pendingScore=score;_pendingTotal=total;_pendingGame=gameName;
+      document.getElementById('submit-score-display').textContent=score+'/'+total;
+      document.getElementById('submit-name').value='';
+      document.getElementById('submit-phone').value='';
+      document.getElementById('submit-status').textContent='';
+      document.getElementById('submit-btn').disabled=false;
+      document.getElementById('submit-modal').classList.add('show');
+      setTimeout(()=>document.getElementById('submit-name').focus(),400);
+    }
+    function closeSubmitModal(){
+      document.getElementById('submit-modal').classList.remove('show');
+    }
+    async function submitScore(){
+      const name=document.getElementById('submit-name').value.trim();
+      const phone=document.getElementById('submit-phone').value.trim();
+      const status=document.getElementById('submit-status');
+      const btn=document.getElementById('submit-btn');
+      if(!name){status.style.color='#EA4335';status.textContent='Please enter your name.';return;}
+      if(!phone){status.style.color='#EA4335';status.textContent='Please enter your phone number.';return;}
+      btn.disabled=true;
+      status.style.color='rgba(255,255,255,.5)';
+      status.textContent='Submitting...';
+      try{
+        const res=await fetch('/api/submit_score',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name,phone,score:_pendingScore,total:_pendingTotal,game:_pendingGame})
+        });
+        const data=await res.json();
+        if(res.ok){
+          status.style.color='#34A853';
+          status.textContent='Score submitted! ✅';
+          setTimeout(closeSubmitModal,1500);
+        }else{
+          status.style.color='#EA4335';
+          status.textContent='❌ '+(data.error||'Failed. Try again.');
+          btn.disabled=false;
+        }
+      }catch(e){
+        status.style.color='#EA4335';
+        status.textContent='❌ Network error. Try again.';
+        btn.disabled=false;
+      }
+    }
+
+    function restartGame() { startGame() }
+    document.getElementById('start-btn').onclick = startGame;
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guess The App by Emoji</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent
+    }
+
+    html,
+    body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: #0f0f1a;
+      color: #fff;
+      overflow-x: hidden
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    @keyframes popIn {
+      0% {
+        opacity: 0;
+        transform: scale(.6)
+      }
+
+      70% {
+        transform: scale(1.08)
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    @keyframes floatY {
+
+      0%,
+      100% {
+        transform: translateY(0)
+      }
+
+      50% {
+        transform: translateY(-8px)
+      }
+    }
+
+    @keyframes emojiWiggle {
+
+      0%,
+      100% {
+        transform: rotate(0deg)
+      }
+
+      25% {
+        transform: rotate(-8deg)
+      }
+
+      75% {
+        transform: rotate(8deg)
+      }
+    }
+
+    .slide-up {
+      animation: slideUp .45s ease both
+    }
+
+    .pop-in {
+      animation: popIn .4s cubic-bezier(.4, 2, .6, 1) both
+    }
+
+    .float {
+      animation: floatY 3s ease-in-out infinite
+    }
+
+    .wiggle {
+      animation: emojiWiggle .5s ease both
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    /* hud */
+    #hud {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(10, 10, 10, .82);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 40px;
+      padding: 8px 18px 8px 12px;
+      font-size: .8rem;
+      font-weight: 700;
+      transition: background .4s
+    }
+
+    #hud.warning {
+      background: rgba(234, 67, 53, .88);
+      animation: pulse-w 1s ease-in-out infinite
+    }
+
+    @keyframes pulse-w {
+
+      0%,
+      100% {
+        box-shadow: 0 4px 24px rgba(234, 67, 53, .4)
+      }
+
+      50% {
+        box-shadow: 0 4px 40px rgba(234, 67, 53, .8)
+      }
+    }
+
+    #ring-svg {
+      transform: rotate(-90deg);
+      width: 36px;
+      height: 36px
+    }
+
+    #ring-fill {
+      fill: none;
+      stroke: #EA4335;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 88;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .4s
+    }
+
+    #hud.warning #ring-fill {
+      stroke: #fff
+    }
+
+    #ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .12);
+      stroke-width: 3
+    }
+
+    #timer-text {
+      font-size: 1rem;
+      font-weight: 900;
+      color: #fff;
+      min-width: 48px;
+      text-align: right
+    }
+
+    #game-label {
+      font-size: .7rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, .5);
+      border-right: 1px solid rgba(255, 255, 255, .12);
+      padding-right: 10px;
+      margin-right: 2px;
+      white-space: nowrap
+    }
+
+    /* timesup */
+    #timesup-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(10, 10, 10, .92);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .6s ease;
+      text-align: center;
+      padding: 24px
+    }
+
+    #timesup-overlay.show {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .tu-icon {
+      font-size: 5rem;
+      margin-bottom: 16px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .2s both
+    }
+
+    .tu-title {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .35s both
+    }
+
+    .tu-bar {
+      width: 60px;
+      height: 5px;
+      border-radius: 4px;
+      background: #EA4335;
+      margin: 20px auto 8px;
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .45s both
+    }
+
+    .tu-sub {
+      font-size: 1rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, .5);
+      animation: popIn .6s cubic-bezier(.34, 1.56, .64, 1) .5s both
+    }
+
+    .screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px
+    }
+
+    .screen.hidden {
+      display: none
+    }
+
+    .btn {
+      border: none;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      border-radius: 16px;
+      transition: transform .1s;
+      color: #fff
+    }
+
+    .btn:active {
+      transform: scale(.94)
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: default
+    }
+
+    .prog-track {
+      width: 100%;
+      background: rgba(255, 255, 255, .1);
+      border-radius: 999px;
+      height: 8px;
+      overflow: hidden
+    }
+
+    .prog-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .7s;
+      background: linear-gradient(90deg, #7c3aed, #4285F4)
+    }
+
+    .opt-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 16px;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 700;
+      font-size: .95rem;
+      cursor: pointer;
+      border: none;
+      transition: all .2s;
+      color: #fff
+    }
+
+    .opt-btn:disabled {
+      cursor: default
+    }
+
+    .opt-btn.correct {
+      background: linear-gradient(135deg, #0d3320, #34A853) !important;
+      outline: 2px solid #34A853
+    }
+
+    .opt-btn.wrong {
+      background: linear-gradient(135deg, #3d0f0f, #EA4335) !important;
+      outline: 2px solid #EA4335
+    }
+
+    .opt-btn.dim {
+      opacity: .4
+    }
+
+    #submit-modal {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity .4s ease;
+    }
+    #submit-modal.show { opacity: 1; pointer-events: all; }
+    .submit-card {
+      background: linear-gradient(135deg,#1a1a2e,#16213e);
+      border: 1px solid rgba(255,255,255,.12); border-radius: 28px;
+      padding: 32px 24px; width: 100%; max-width: 360px; text-align: center;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .submit-title { font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; }
+    .submit-sub { color: rgba(255,255,255,.5); font-size: .85rem; margin-bottom: 20px; }
+    .submit-input {
+      width: 100%; padding: 14px 16px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07);
+      color: #fff; font-family: 'Poppins',sans-serif; font-size: 1rem;
+      font-weight: 600; margin-bottom: 12px; outline: none; transition: border .2s;
+    }
+    .submit-input:focus { border-color: rgba(255,255,255,.4); }
+    .submit-input::placeholder { color: rgba(255,255,255,.3); font-weight: 400; }
+    .submit-btn {
+      width: 100%; padding: 15px; border-radius: 14px; border: none;
+      font-family: 'Poppins',sans-serif; font-size: 1rem; font-weight: 700;
+      color: #fff; cursor: pointer; margin-top: 4px; transition: opacity .2s, transform .1s;
+    }
+    .submit-btn:active { transform: scale(.97); }
+    .submit-btn:disabled { opacity: .5; cursor: default; }
+    .submit-status { margin-top: 12px; font-size: .85rem; font-weight: 600; min-height: 20px; }
+    .skip-link {
+      display: block; margin-top: 14px; color: rgba(255,255,255,.3);
+      font-size: .8rem; cursor: pointer; text-decoration: underline;
+    }
+    .skip-link:hover { color: rgba(255,255,255,.6); }
+  </style>
+</head>
+
+<body>
+
+  <div id="hud">
+    <span id="game-label">📱 Guess The App</span>
+    <svg id="ring-svg" viewBox="0 0 36 36">
+      <circle id="ring-bg" cx="18" cy="18" r="14" />
+      <circle id="ring-fill" cx="18" cy="18" r="14" />
+    </svg>
+    <span id="timer-text">5:00</span>
+  </div>
+
+  <div id="timesup-overlay">
+    <div class="tu-icon">⏰</div>
+    <div class="tu-title">Time's Up!</div>
+    <div class="tu-bar"></div>
+    <div class="tu-sub">Head back to the admin to submit your score.</div>
+  </div>
+
+  <div id="screen-splash" class="screen" style="background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 50%,#0f1a3a 100%)">
+    <div class="slide-up" style="text-align:center;max-width:360px;width:100%">
+      <div class="float" style="font-size:4.5rem;margin-bottom:12px">🎯</div>
+      <div style="display:flex;justify-content:center;gap:2px;font-size:1.6rem;font-weight:900;margin-bottom:8px">
+        <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span
+          style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span
+          style="color:#EA4335">e</span>
+      </div>
+      <h1 style="font-size:1.8rem;font-weight:900;line-height:1.2;margin-bottom:8px">Guess The App<br />by Emoji!</h1>
+      <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:20px">Decode the emoji clues and guess the app!
+        🔍 Easy? Let's see about that! 😏</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+        <div
+          style="background:rgba(255,255,255,.08);border-radius:16px;padding:12px;text-align:center;font-size:1.5rem">
+          📧🔵🔴🟡🟢</div>
+        <div
+          style="background:rgba(255,255,255,.08);border-radius:16px;padding:12px;text-align:center;font-size:1.5rem">
+          🗺️📍</div>
+        <div
+          style="background:rgba(255,255,255,.08);border-radius:16px;padding:12px;text-align:center;font-size:1.5rem">
+          ▶️🔴</div>
+        <div
+          style="background:rgba(255,255,255,.08);border-radius:16px;padding:12px;text-align:center;font-size:1.5rem">
+          📁☁️</div>
+      </div>
+      <button class="btn" id="start-btn"
+        style="width:100%;padding:16px;font-size:1.1rem;background:linear-gradient(135deg,#7c3aed,#4285F4)">
+        Let's Guess! 🎯
+      </button>
+      <p style="color:rgba(255,255,255,.3);font-size:.75rem;margin-top:12px">10 emojis • Choose carefully • Hints
+        included 👀</p>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen hidden"
+    style="background:linear-gradient(135deg,#0f0f1a 0%,#1a0a2e 50%,#0f1a3a 100%);justify-content:flex-start;padding:0">
+    <div
+      style="width:100%;max-width:420px;margin:0 auto;padding:20px;display:flex;flex-direction:column;gap:10px;align-items:stretch">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:2px;font-size:1.2rem;font-weight:900">
+          <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span
+            style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span
+            style="color:#EA4335">e</span>
+        </div>
+        <div id="q-counter"
+          style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:999px;font-size:.85rem;font-weight:700">
+          1/10</div>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill" id="prog-fill" style="width:10%"></div>
+      </div>
+
+      <div style="display:flex;justify-content:center">
+        <div
+          style="background:rgba(255,255,255,.1);padding:6px 16px;border-radius:999px;font-size:.85rem;font-weight:600;display:flex;gap:6px;align-items:center">
+          🎯 <span id="score-pill">0</span> pts
+        </div>
+      </div>
+
+      <div id="emoji-card"
+        style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:32px 16px;display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div id="emoji-display" style="font-size:3.5rem;text-align:center;letter-spacing:4px;line-height:1.4"></div>
+        <p id="hint-text" style="color:rgba(255,255,255,.4);font-size:.8rem;font-weight:500"></p>
+        <div id="result-text" class="hidden pop-in"
+          style="text-align:center;font-size:.9rem;font-weight:700;margin-top:4px"></div>
+      </div>
+
+      <div id="options-wrap" style="display:flex;flex-direction:column;gap:10px"></div>
+      <!-- Next btn -->
+      <button class="btn hidden pop-in" id="next-btn"
+        style="padding:14px;font-size:1rem;background:linear-gradient(135deg,#7c3aed,#4285F4)" onclick="handleNext()">
+        Next Emoji →
+      </button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+  <div id="screen-final" class="screen hidden"
+    style="background:linear-gradient(135deg,#0f0f1a,#1a0a2e,#0f1a3a);text-align:center">
+    <div class="slide-up" style="max-width:360px;width:100%">
+      <div id="final-emoji" style="font-size:4.5rem;margin-bottom:12px">🏆</div>
+      <h2 style="font-size:2rem;font-weight:900;margin-bottom:4px">You decoded</h2>
+      <p id="final-msg" style="color:rgba(255,255,255,.6);margin-bottom:20px"></p>
+      <div style="background:rgba(255,255,255,.1);border-radius:24px;padding:24px;margin-bottom:20px">
+        <div id="final-score"
+          style="font-size:3.5rem;font-weight:900;background:linear-gradient(90deg,#7c3aed,#4285F4);-webkit-background-clip:text;background-clip:text;color:transparent">
+          0/10</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.85rem;margin-top:4px">apps cracked</div>
+        <div class="prog-track" style="margin-top:16px">
+          <div class="prog-fill" id="final-bar" style="width:0%;transition:width 1s ease"></div>
+        </div>
+      </div>
+      <button class="btn" id="restart-btn"
+        style="width:100%;padding:16px;font-size:1rem;background:linear-gradient(135deg,#7c3aed,#4285F4)"
+        onclick="restartGame()">
+        Play Again 🔄
+      </button>
+      <p style="color:rgba(255,255,255,.25);font-size:.72rem;margin-top:16px">
+        🛠️ Created by <span style="color:rgba(255,255,255,.45);font-weight:700">Mahir Mulani</span> · Tech Team Member
+      </p>
+    </div>
+  </div>
+
+  <div id="submit-modal">
+    <div class="submit-card">
+      <div style="font-size:2.5rem;margin-bottom:8px">🏆</div>
+      <div class="submit-title">Submit Your Score!</div>
+      <div class="submit-sub">Enter your details to register on the leaderboard</div>
+      <div id="submit-score-display" style="font-size:2rem;font-weight:900;margin-bottom:20px"></div>
+      <input class="submit-input" id="submit-name" type="text" placeholder="Your name" maxlength="50" autocomplete="off"/>
+      <input class="submit-input" id="submit-phone" type="tel" placeholder="Phone number" maxlength="15" autocomplete="off"/>
+      <button class="submit-btn" id="submit-btn" onclick="submitScore()" style="background:linear-gradient(135deg,#4285F4,#0d47a1)">Submit Score 🚀</button>
+      <div class="submit-status" id="submit-status"></div>
+      <span class="skip-link" onclick="closeSubmitModal()">Skip, just play again</span>
+    </div>
+  </div>
+
+  <script>
+    const ALL_PUZZLES = [
+      { id: 1, emojis: '📧 🔵🔴🟡🟢', answer: 'Gmail', options: ['Gmail', 'Outlook', 'Yahoo Mail'], hint: "Google's colorful email app" },
+      { id: 2, emojis: '🗺️ 📍', answer: 'Google Maps', options: ['Google Maps', 'Waze', 'Apple Maps'], hint: "Never get lost again" },
+      { id: 3, emojis: '▶️ 🔴', answer: 'YouTube', options: ['YouTube', 'Netflix', 'Twitch'], hint: "World's biggest video platform" },
+      { id: 4, emojis: '📁 ☁️', answer: 'Google Drive', options: ['Google Drive', 'Dropbox', 'OneDrive'], hint: "15 GB free cloud storage" },
+      { id: 5, emojis: '🎥 💬', answer: 'Google Meet', options: ['Google Meet', 'Zoom', 'Skype'], hint: "Video calls made by Google" },
+      { id: 6, emojis: '🖼️ ☁️', answer: 'Google Photos', options: ['Google Photos', 'iCloud', 'Gallery'], hint: "It used to be free forever 😢" },
+      { id: 7, emojis: '🌍 🔎', answer: 'Google Chrome', options: ['Google Chrome', 'Firefox', 'Safari'], hint: "The RAM-hungry browser 🐏" },
+      { id: 8, emojis: '📅 📆', answer: 'Google Calendar', options: ['Google Calendar', 'Outlook Calendar', 'Notion'], hint: "Never miss a GDG event!" },
+      { id: 9, emojis: '🤖 🎤', answer: 'Google Assistant', options: ['Google Assistant', 'Alexa', 'Cortana'], hint: "Hey ____, set a reminder!" },
+      { id: 10, emojis: '🛒 📱', answer: 'Google Play Store', options: ['Google Play Store', 'App Store', 'Galaxy Store'], hint: "Where Android apps live" },
+      { id: 11, emojis: '📰 🌐', answer: 'Google News', options: ['Google News', 'Flipboard', 'Inshorts'], hint: "Personalized news by Google" },
+      { id: 12, emojis: '📝 ☁️', answer: 'Google Docs', options: ['Google Docs', 'Microsoft Word', 'Notion'], hint: "Real-time collaborative writing" },
+      { id: 13, emojis: '📊 📋', answer: 'Google Sheets', options: ['Google Sheets', 'Excel', 'Numbers'], hint: "Google's answer to Excel" },
+      { id: 14, emojis: '🖥️ 📊', answer: 'Google Slides', options: ['Google Slides', 'PowerPoint', 'Keynote'], hint: "Google's presentation tool" },
+      { id: 15, emojis: '🏠 🔊', answer: 'Google Home', options: ['Google Home', 'Amazon Echo', 'Apple HomePod'], hint: "Smart speaker by Google" },
+      { id: 16, emojis: '🔤 🌐', answer: 'Google Translate', options: ['Google Translate', 'DeepL', 'Bing Translate'], hint: "Break language barriers. Sometimes badly 😂" },
+      { id: 17, emojis: '🔍 📷', answer: 'Google Lens', options: ['Google Lens', 'Pinterest Lens', 'Bing Visual'], hint: "Point and discover anything" },
+      { id: 18, emojis: '💳 📲', answer: 'Google Pay', options: ['Google Pay', 'Apple Pay', 'PayPal'], hint: "Tap to pay, Google edition" },
+      { id: 19, emojis: '📚 🎓', answer: 'Google Classroom', options: ['Google Classroom', 'Moodle', 'Canvas'], hint: "Learning management by Google" },
+      { id: 20, emojis: '🌐 🌍', answer: 'Google Earth', options: ['Google Earth', 'Bing Maps', 'Here Maps'], hint: "Explore the entire planet" },
+      { id: 21, emojis: '🎵 ▶️', answer: 'YouTube Music', options: ['YouTube Music', 'Spotify', 'Apple Music'], hint: "Google's music streaming app" },
+      { id: 22, emojis: '📡 📶', answer: 'Google Fi', options: ['Google Fi', 'T-Mobile', 'AT\&T'], hint: "Google's own phone carrier" },
+      { id: 23, emojis: '🔬 📈', answer: 'Google Analytics', options: ['Google Analytics', 'Mixpanel', 'Hotjar'], hint: "Website traffic tracking by Google" },
+      { id: 24, emojis: '💼 🌐', answer: 'Google Workspace', options: ['Google Workspace', 'Microsoft 365', 'Notion'], hint: "Google's suite for businesses" },
+      { id: 25, emojis: '♊ 🤖', answer: 'Google Gemini', options: ['Google Gemini', 'ChatGPT', 'Claude'], hint: "Google's AI assistant, formerly Bard" },
+      { id: 26, emojis: '🧠 🤖', answer: 'Google DeepMind', options: ['Google DeepMind', 'OpenAI', 'Anthropic'], hint: "Google's elite AI research lab" },
+      { id: 27, emojis: '🐦 ❌', answer: 'X (Twitter)', options: ['X (Twitter)', 'Threads', 'Mastodon'], hint: "Elon renamed the bird app" },
+      { id: 28, emojis: '📸 🔁', answer: 'Instagram', options: ['Instagram', 'Snapchat', 'VSCO'], hint: "Photos, reels, and aesthetic vibes" },
+      { id: 29, emojis: '👻 📷', answer: 'Snapchat', options: ['Snapchat', 'Instagram', 'BeReal'], hint: "Photos disappear in 10 seconds" },
+      { id: 30, emojis: '🎵 🟢', answer: 'Spotify', options: ['Spotify', 'Apple Music', 'JioSaavn'], hint: "Green music streaming giant" },
+      { id: 31, emojis: '🛒 📦', answer: 'Amazon', options: ['Amazon', 'Flipkart', 'Meesho'], hint: "Everything store. Prime delivery 📦" },
+      { id: 32, emojis: '💼 👔', answer: 'LinkedIn', options: ['LinkedIn', 'Indeed', 'Glassdoor'], hint: "Professional networking site" },
+      { id: 33, emojis: '🎮 🎙️', answer: 'Discord', options: ['Discord', 'Telegram', 'Slack'], hint: "Gaming chat turned community hub 💜" },
+      { id: 34, emojis: '✈️ 💬', answer: 'Telegram', options: ['Telegram', 'Signal', 'WhatsApp'], hint: "Supergroups and channels app" },
+      { id: 35, emojis: '📱 💚', answer: 'WhatsApp', options: ['WhatsApp', 'iMessage', 'Signal'], hint: "Most used messaging app in India 🇮🇳" },
+      { id: 36, emojis: '🎬 🔴', answer: 'Netflix', options: ['Netflix', 'Amazon Prime', 'Hotstar'], hint: "Netflix and chill 🍿" },
+      { id: 37, emojis: '🏠 🌍', answer: 'Airbnb', options: ['Airbnb', 'MakeMyTrip', 'Booking.com'], hint: "Stay anywhere in the world" },
+      { id: 38, emojis: '🚗 📍', answer: 'Uber', options: ['Uber', 'Ola', 'Rapido'], hint: "Ride-hailing app that changed everything" },
+      { id: 39, emojis: '📝 ⬛', answer: 'Notion', options: ['Notion', 'Evernote', 'OneNote'], hint: "All-in-one productivity workspace" },
+      { id: 40, emojis: '💜 🎬', answer: 'Twitch', options: ['Twitch', 'YouTube Gaming', 'Kick'], hint: "Where gamers livestream" },
+      { id: 41, emojis: '🐙 💾', answer: 'GitHub', options: ['GitHub', 'GitLab', 'Bitbucket'], hint: "Where code lives. Owned by Microsoft" },
+      { id: 42, emojis: '🤖 💬', answer: 'ChatGPT', options: ['ChatGPT', 'Google Gemini', 'Claude'], hint: "OpenAI's famous AI chatbot" },
+      { id: 43, emojis: '🍕 🛵', answer: 'Zomato', options: ['Zomato', 'Swiggy', 'Dunzo'], hint: "Food delivery with red branding 🔴" },
+      { id: 44, emojis: '🎥 📱', answer: 'TikTok', options: ['TikTok', 'Instagram Reels', 'Moj'], hint: "Short videos that took over the world" },
+      { id: 45, emojis: '💧 📁', answer: 'Dropbox', options: ['Dropbox', 'Google Drive', 'Box'], hint: "The original cloud storage pioneer" },
+      { id: 46, emojis: '📺 ⭐', answer: 'Hotstar', options: ['Hotstar', 'Netflix', 'Zee5'], hint: "IPL, Cricket & more. Now Disney+ Hotstar" },
+      { id: 47, emojis: '🦊 🌐', answer: 'Firefox', options: ['Firefox', 'Safari', 'Opera'], hint: "Mozilla's open-source browser 🦊" },
+      { id: 48, emojis: '🔔 📺', answer: 'YouTube Shorts', options: ['YouTube Shorts', 'Instagram Reels', 'TikTok'], hint: "YouTube's answer to TikTok" },
+      { id: 49, emojis: '🍎 🗣️', answer: 'Siri', options: ['Siri', 'Alexa', 'Google Assistant'], hint: "Apple's voice assistant" },
+      { id: 50, emojis: '📦 🚚', answer: 'Flipkart', options: ['Flipkart', 'Amazon', 'Meesho'], hint: "India's home-grown e-commerce giant 🇮🇳" },
+      { id: 51, emojis: '💜 🎓', answer: 'Google Classroom', options: ['Google Classroom', 'Zoom', 'Teams'], hint: "Used by every school during COVID!" },
+      { id: 52, emojis: '🗓️ ✅', answer: 'Google Tasks', options: ['Google Tasks', 'Todoist', 'Microsoft To Do'], hint: "Simple to-do list by Google" },
+      { id: 53, emojis: '🌙 ✨', answer: 'Google Gemini', options: ['Google Gemini', 'ChatGPT', 'Copilot'], hint: "Formerly known as Google Bard" },
+      { id: 54, emojis: '🔵 🏢', answer: 'Microsoft Teams', options: ['Microsoft Teams', 'Slack', 'Zoom'], hint: "Work meetings that could be emails 😭" },
+      { id: 55, emojis: '🛍️ 🎁', answer: 'Google Shopping', options: ['Google Shopping', 'Amazon', 'Flipkart'], hint: "Compare prices across all stores" },
+    ];
+
+    const OPT_STYLES = [
+      'linear-gradient(135deg,#1a1a3e,#4285F4)',
+      'linear-gradient(135deg,#2a0a1e,#EA4335)',
+      'linear-gradient(135deg,#1e1a00,#FBBC05)',
+    ];
+
+
+    const ENDS_AT = {{ ends_at }};
+    const TOTAL = Math.max(1, Math.round((ENDS_AT - Date.now()) / 1000));
+    const CIRCUMF = 88;
+    function getRemaining() { return Math.max(0, Math.round((ENDS_AT - Date.now()) / 1000)); }
+    let remaining = getRemaining();
+    const ringFill = document.getElementById('ring-fill');
+    const timerText = document.getElementById('timer-text');
+    const hud = document.getElementById('hud');
+    const timesupOverlay = document.getElementById('timesup-overlay');
+    function fmtTime(s) { const m = Math.floor(s / 60); const sec = s % 60; return `${m}:${sec.toString().padStart(2, '0')}` }
+    timerText.textContent = fmtTime(TOTAL);
+    const hudInterval = setInterval(() => {
+      remaining = getRemaining(); timerText.textContent = fmtTime(remaining);
+      ringFill.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL);
+      if (remaining <= 60) hud.classList.add('warning');
+      if (remaining <= 0) { clearInterval(hudInterval); timesupOverlay.classList.add('show') }
+    }, 1000);
+
+
+    let puzzles = [], index = 0, chosen = null, score = 0, currentOptions = [];
+    function pick10(arr) { return [...arr].sort(() => Math.random() - .5).slice(0, 10) }
+    function shuffleOpts(p) { return [...p.options].sort(() => Math.random() - .5) }
+    function showScreen(id) { ['splash', 'game', 'final'].forEach(s => document.getElementById('screen-' + s).classList.toggle('hidden', s !== id)) }
+
+    function startGame() {
+      puzzles = pick10(ALL_PUZZLES); index = 0; chosen = null; score = 0;
+      showScreen('game'); renderPuzzle();
+    }
+
+    function renderPuzzle() {
+      const p = puzzles[index];
+      currentOptions = shuffleOpts(p);
+      document.getElementById('q-counter').textContent = `${index + 1}/${puzzles.length}`;
+      document.getElementById('prog-fill').style.width = `${((index + 1) / puzzles.length) * 100}%`;
+      document.getElementById('score-pill').textContent = score;
+      // emoji card
+      const emojiEl = document.getElementById('emoji-display');
+      emojiEl.textContent = p.emojis;
+      emojiEl.classList.remove('wiggle'); void emojiEl.offsetWidth; emojiEl.classList.add('wiggle');
+      document.getElementById('hint-text').textContent = `💡 Hint: ${p.hint}`;
+      document.getElementById('result-text').classList.add('hidden');
+      document.getElementById('result-text').textContent = '';
+      // build option buttons
+      const wrap = document.getElementById('options-wrap');
+      wrap.innerHTML = '';
+      currentOptions.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt-btn';
+        btn.style.background = OPT_STYLES[i % OPT_STYLES.length];
+        btn.textContent = opt;
+        btn.onclick = () => handlePick(opt);
+        wrap.appendChild(btn);
+      });
+      document.getElementById('next-btn').classList.add('hidden');
+      chosen = null;
+    }
+
+    function handlePick(opt) {
+      if (chosen) return;
+      chosen = opt;
+      const p = puzzles[index];
+      const isCorrect = opt === p.answer;
+      if (isCorrect) {
+        score++;
+        confetti({ particleCount: 100, spread: 80, origin: { y: .55 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] });
+      }
+
+      const btns = document.querySelectorAll('.opt-btn');
+      btns.forEach(btn => {
+        btn.disabled = true;
+        const isAnswer = btn.textContent === p.answer;
+        const isThis = btn.textContent === opt;
+        if (isAnswer) { btn.classList.add('correct') }
+        else if (isThis && !isAnswer) { btn.classList.add('wrong') }
+        else { btn.classList.add('dim') }
+
+        if (isAnswer) btn.textContent += (' ✅');
+        else if (isThis && !isAnswer) btn.textContent += (' ❌');
+      });
+
+      const rt = document.getElementById('result-text');
+      rt.textContent = isCorrect ? `🎉 ${p.answer}! Correct!` : `❌ It was ${p.answer}!`;
+      rt.style.color = isCorrect ? '#34A853' : '#EA4335';
+      rt.classList.remove('hidden');
+
+      document.getElementById('score-pill').textContent = score;
+      const nextBtn = document.getElementById('next-btn');
+      nextBtn.classList.remove('hidden');
+      nextBtn.textContent = index + 1 >= puzzles.length ? 'See Results 🏁' : 'Next Emoji →';
+    }
+
+    function handleNext() {
+      if (index + 1 >= puzzles.length) { showFinal(); return }
+      index++; renderPuzzle();
+    }
+
+    function showFinal() {
+      const pct = Math.round((score / puzzles.length) * 100);
+      const msg = pct === 100 ? "Google Grandmaster! 🏆" : pct >= 70 ? "You live on your phone 📱" : pct >= 40 ? "Emoji decoder in training 🤔" : "Do you even Google? 💀";
+      document.getElementById('final-emoji').textContent = pct >= 80 ? '🏆' : pct >= 50 ? '🎉' : pct >= 30 ? '😅' : '💀';
+      document.getElementById('final-msg').textContent = msg;
+      document.getElementById('final-score').textContent = `${score}/${puzzles.length}`;
+      showScreen('final');
+      setTimeout(()=>showSubmitModal(score,puzzles.length,'Guess The App by Emoji'),800);
+      setTimeout(() => { document.getElementById('final-bar').style.width = `${pct}%` }, 100);
+      const end = Date.now() + 3000;
+      const fire = () => { if (Date.now() < end) { confetti({ particleCount: 60, spread: 100, origin: { y: .5 }, colors: ['#4285F4', '#EA4335', '#FBBC05', '#34A853'] }); requestAnimationFrame(fire) } };
+      fire();
+    }
+
+    let _pendingScore=0,_pendingTotal=0,_pendingGame='';
+    function showSubmitModal(score,total,gameName){
+      _pendingScore=score;_pendingTotal=total;_pendingGame=gameName;
+      document.getElementById('submit-score-display').textContent=score+'/'+total;
+      document.getElementById('submit-name').value='';
+      document.getElementById('submit-phone').value='';
+      document.getElementById('submit-status').textContent='';
+      document.getElementById('submit-btn').disabled=false;
+      document.getElementById('submit-modal').classList.add('show');
+      setTimeout(()=>document.getElementById('submit-name').focus(),400);
+    }
+    function closeSubmitModal(){
+      document.getElementById('submit-modal').classList.remove('show');
+    }
+    async function submitScore(){
+      const name=document.getElementById('submit-name').value.trim();
+      const phone=document.getElementById('submit-phone').value.trim();
+      const status=document.getElementById('submit-status');
+      const btn=document.getElementById('submit-btn');
+      if(!name){status.style.color='#EA4335';status.textContent='Please enter your name.';return;}
+      if(!phone){status.style.color='#EA4335';status.textContent='Please enter your phone number.';return;}
+      btn.disabled=true;
+      status.style.color='rgba(255,255,255,.5)';
+      status.textContent='Submitting...';
+      try{
+        const res=await fetch('/api/submit_score',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({name,phone,score:_pendingScore,total:_pendingTotal,game:_pendingGame})
+        });
+        const data=await res.json();
+        if(res.ok){
+          status.style.color='#34A853';
+          status.textContent='Score submitted! ✅';
+          setTimeout(closeSubmitModal,1500);
+        }else{
+          status.style.color='#EA4335';
+          status.textContent='❌ '+(data.error||'Failed. Try again.');
+          btn.disabled=false;
+        }
+      }catch(e){
+        status.style.color='#EA4335';
+        status.textContent='❌ Network error. Try again.';
+        btn.disabled=false;
+      }
+    }
+
+    function restartGame() { startGame() }
+    document.getElementById('start-btn').onclick = startGame;
+  </script>
+</body>
+
+</html>

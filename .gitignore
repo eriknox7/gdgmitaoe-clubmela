@@ -1,0 +1,28 @@
+# Node.js / npm
+node_modules/
+dist/
+.cache/
+.vite/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.env
+venv/
+env/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Secrets
+credentials.json
+.vercel/

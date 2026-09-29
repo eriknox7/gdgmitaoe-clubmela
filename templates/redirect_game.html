@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{{ game.name }} — Timer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent: {{ game.color }};
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      font-family: 'Nunito', sans-serif;
+      background: #0d0d0d;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* ── Background radial glow ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 50%,
+        color-mix(in srgb, var(--accent) 18%, transparent) 0%,
+        transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 24px;
+      text-align: center;
+    }
+
+    /* ── Game icon + name ── */
+    .game-icon {
+      font-size: 3.5rem;
+      margin-bottom: 12px;
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+
+    .game-name {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+    }
+
+    /* ── Big SVG ring timer ── */
+    .ring-container {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin-bottom: 40px;
+    }
+
+    .ring-svg {
+      width: 220px;
+      height: 220px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-track {
+      fill: none;
+      stroke: rgba(255,255,255,0.07);
+      stroke-width: 10;
+    }
+
+    .ring-progress {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 10;
+      stroke-linecap: round;
+      /* circumference = 2π × 95 ≈ 596.9 */
+      stroke-dasharray: 597;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke 0.5s;
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+
+    .ring-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .time-display {
+      font-size: 3.2rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .time-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ── Status message ── */
+    .status-msg {
+      font-size: 1rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 32px;
+      min-height: 1.4rem;
+    }
+
+    /* ── Launch button ── */
+    .launch-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      border: none;
+      border-radius: 50px;
+      padding: 14px 32px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.3s;
+      box-shadow: 0 4px 24px color-mix(in srgb, var(--accent) 50%, transparent);
+      text-decoration: none;
+    }
+    .launch-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 65%, transparent);
+    }
+    .launch-btn:active { transform: scale(0.97); }
+    .launch-btn.launched {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    /* ── Warning state ── */
+    body.warning .ring-progress {
+      stroke: #EA4335;
+      filter: drop-shadow(0 0 10px #EA4335);
+      animation: pulse-ring 0.8s ease-in-out infinite;
+    }
+    body.warning .time-display { color: #EA4335; }
+
+    @keyframes pulse-ring {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.65; }
+    }
+
+    /* ── Time's up overlay ── */
+    #timesup {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    #timesup.show { opacity: 1; pointer-events: all; }
+
+    .tu-icon  { font-size: 5rem; animation: bounce-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both; }
+    .tu-title { font-size: 3.2rem; font-weight: 900; letter-spacing: -1px; animation: bounce-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.25s both; }
+    .tu-bar   { width: 60px; height: 5px; border-radius: 4px; background: var(--accent); animation: bounce-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.35s both; }
+    .tu-sub   { font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.45); animation: bounce-in 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.42s both; }
+
+    @keyframes bounce-in {
+      from { opacity:0; transform:scale(0.7) translateY(24px); }
+      to   { opacity:1; transform:scale(1)   translateY(0);    }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="game-icon">{{ game.icon }}</div>
+    <div class="game-name">{{ game.name }}</div>
+
+    <!-- Ring timer -->
+    <div class="ring-container">
+      <svg class="ring-svg" viewBox="0 0 220 220">
+        <circle class="ring-track"    cx="110" cy="110" r="95"/>
+        <circle class="ring-progress" cx="110" cy="110" r="95" id="ringProg"/>
+      </svg>
+      <div class="ring-text">
+        <div class="time-display" id="timeDisplay">5:00</div>
+        <div class="time-label">remaining</div>
+      </div>
+    </div>
+
+    <div class="status-msg" id="statusMsg">Click below to open the game, then come back here to track your time.</div>
+
+    <!-- Opens the game in a new tab -->
+    <a
+      id="launchBtn"
+      class="launch-btn"
+      href="{{ game.url }}"
+      target="_blank"
+      rel="noopener noreferrer"
+      onclick="onLaunch()"
+    >
+      🚀 Open {{ game.name }}
+    </a>
+  </div>
+
+  <!-- Time's Up overlay -->
+  <div id="timesup">
+    <div class="tu-icon">⏰</div>
+    <div class="tu-title">Time's Up!</div>
+    <div class="tu-bar"></div>
+    <div class="tu-sub">Head back to the admin to submit your score.</div>
+  </div>
+
+  <script>
+    const ENDS_AT = {{ ends_at }};  // epoch ms from dashboard QR
+        function getRemaining(){ return Math.max(0, Math.floor((ENDS_AT - Date.now()) / 1000)); }
+    const CIRCUMF     = 597; // 2π × 95
+    const TOTAL       = Math.max(1, Math.round((ENDS_AT - Date.now()) / 1000));
+
+    let remaining = getRemaining(); // will be overwritten on timer start
+    let timerStarted  = false;
+    let interval      = null;
+
+    const ringProg    = document.getElementById('ringProg');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const statusMsg   = document.getElementById('statusMsg');
+    const launchBtn   = document.getElementById('launchBtn');
+    const timesupDiv  = document.getElementById('timesup');
+
+    function fmt(s) {
+      const m   = Math.floor(s / 60);
+      const sec = s % 60;
+      return `${m}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function tick() {
+      remaining = getRemaining();
+      timeDisplay.textContent = fmt(remaining);
+      ringProg.style.strokeDashoffset = CIRCUMF * (1 - remaining / TOTAL);
+
+      if (remaining <= 60 && !document.body.classList.contains('warning')) {
+        document.body.classList.add('warning');
+        statusMsg.textContent = "Less than a minute left — wrap up!";
+      }
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        timesupDiv.classList.add('show');
+      }
+    }
+
+    function onLaunch() {
+      if (timerStarted) return;
+      timerStarted = true;
+      remaining = getRemaining();
+
+      // Small delay so the tab opens first
+      setTimeout(() => {
+        launchBtn.classList.add('launched');
+        launchBtn.textContent = '✅ Game opened in new tab';
+        statusMsg.textContent = 'Timer started! Switch to the game tab and play.';
+        interval = setInterval(tick, 1000);
+      }, 400);
+    }
+
+    // Initialise ring
+    ringProg.style.strokeDashoffset = 0;
+    timeDisplay.textContent = fmt(TOTAL);
+  </script>
+
+</body>
+</html>

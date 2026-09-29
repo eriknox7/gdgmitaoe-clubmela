@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leaderboard — Club Mela</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --blue:   #4285F4;
+      --red:    #EA4335;
+      --yellow: #FBBC05;
+      --green:  #34A853;
+      --bg:     #07070f;
+      --card:   rgba(255,255,255,0.04);
+      --border: rgba(255,255,255,0.07);
+      --muted:  rgba(255,255,255,0.4);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* Ambient glow bg */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 15% 10%, rgba(66,133,244,.13) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 40% at 85% 85%, rgba(52,168,83,.10) 0%, transparent 55%),
+        radial-gradient(ellipse 60% 40% at 50% 50%, rgba(251,188,5,.05) 0%, transparent 60%);
+    }
+
+    /* Grid noise texture */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.015'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .page {
+      position: relative; z-index: 1;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    /* ── Header ── */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeUp .5s ease both;
+    }
+
+    .gdg-dots {
+      display: flex; justify-content: center; gap: 6px;
+      margin-bottom: 16px;
+    }
+    .gdg-dots span {
+      width: 10px; height: 10px; border-radius: 50%;
+      animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .gdg-dots span:nth-child(1) { background: var(--blue);   animation-delay: .05s; }
+    .gdg-dots span:nth-child(2) { background: var(--red);    animation-delay: .10s; }
+    .gdg-dots span:nth-child(3) { background: var(--yellow); animation-delay: .15s; }
+    .gdg-dots span:nth-child(4) { background: var(--green);  animation-delay: .20s; }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.2rem, 8vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .h1-accent {
+      display: inline-block;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 500;
+    }
+
+    /* ── Game selector ── */
+    .selector-wrap {
+      margin-bottom: 28px;
+      animation: fadeUp .5s .1s ease both;
+    }
+
+    .selector-label {
+      display: block;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .select-outer {
+      position: relative;
+    }
+
+    select {
+      width: 100%;
+      padding: 14px 48px 14px 18px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      outline: none;
+      transition: border .2s, background .2s;
+    }
+
+    select:focus {
+      border-color: rgba(66,133,244,.5);
+      background: rgba(66,133,244,.06);
+    }
+
+    select option {
+      background: #1a1a2e;
+      color: #fff;
+    }
+
+    .select-arrow {
+      position: absolute;
+      right: 16px; top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      animation: fadeUp .5s .15s ease both;
+    }
+
+    .stats-label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .refresh-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .refresh-btn:hover {
+      border-color: rgba(255,255,255,.2);
+      color: #fff;
+    }
+    .refresh-btn.spinning .icon { display: inline-block; animation: spin .6s linear infinite; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Leaderboard list ── */
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: fadeUp .5s .2s ease both;
+    }
+
+    /* Top 3 podium cards */
+    .entry {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      transition: transform .15s, box-shadow .15s;
+      animation: slideIn .35s ease both;
+    }
+
+    .entry:hover {
+      transform: translateX(4px);
+    }
+
+    .entry.rank-1 {
+      background: linear-gradient(135deg, rgba(251,188,5,.12), rgba(251,188,5,.04));
+      border-color: rgba(251,188,5,.3);
+      box-shadow: 0 0 32px rgba(251,188,5,.08);
+    }
+    .entry.rank-2 {
+      background: linear-gradient(135deg, rgba(192,192,192,.1), rgba(192,192,192,.03));
+      border-color: rgba(192,192,192,.25);
+    }
+    .entry.rank-3 {
+      background: linear-gradient(135deg, rgba(205,127,50,.1), rgba(205,127,50,.03));
+      border-color: rgba(205,127,50,.25);
+    }
+
+    .rank-badge {
+      width: 40px; height: 40px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 900;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .rank-1 .rank-badge { background: rgba(251,188,5,.2);  color: #FBBC05; font-size: 1.3rem; }
+    .rank-2 .rank-badge { background: rgba(192,192,192,.15); color: #c0c0c0; font-size: 1.3rem; }
+    .rank-3 .rank-badge { background: rgba(205,127,50,.15);  color: #cd7f32; font-size: 1.3rem; }
+    .entry:not(.rank-1):not(.rank-2):not(.rank-3) .rank-badge {
+      background: rgba(255,255,255,.06);
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .entry-info { flex: 1; min-width: 0; }
+
+    .entry-name {
+      font-weight: 700;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rank-1 .entry-name { color: #fff; }
+
+    .entry-score {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .rank-1 .entry-score { color: #FBBC05; }
+    .rank-2 .entry-score { color: #c0c0c0; }
+    .rank-3 .entry-score { color: #cd7f32; }
+    .entry:not(.rank-1):not(.rank-2):not(.rank-3) .entry-score { color: rgba(255,255,255,.8); }
+
+    /* ── Empty / loading states ── */
+    .state-box {
+      text-align: center;
+      padding: 60px 24px;
+      color: var(--muted);
+      font-size: .95rem;
+      font-weight: 500;
+      border: 1px dashed var(--border);
+      border-radius: 20px;
+      animation: fadeUp .4s ease both;
+    }
+
+    .state-box .icon { font-size: 3rem; margin-bottom: 12px; display: block; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      0%   { opacity: 0; transform: scale(.4); }
+      70%  { transform: scale(1.15); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="gdg-dots">
+      <span></span><span></span><span></span><span></span>
+    </div>
+    <h1>Leader<span class="h1-accent">board</span></h1>
+    <p class="subtitle">Club Mela · GDG On Campus MITAOE</p>
+  </div>
+
+  <!-- Game selector -->
+  <div class="selector-wrap">
+    <label class="selector-label" for="game-select">Select Game</label>
+    <div class="select-outer">
+      <select id="game-select" onchange="loadBoard()">
+        <option value="">— Pick a game —</option>
+        {% for id, g in games.items() %}
+        {% if g.type == 'local' %}
+        <option value="{{ g.name }}">{{ g.icon }} {{ g.name }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+      <span class="select-arrow">▾</span>
+    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <span class="stats-label" id="stats-label">Choose a game to view rankings</span>
+    <button class="refresh-btn" id="refresh-btn" onclick="loadBoard()" style="display:none">
+      <span class="icon">↻</span> Refresh
+    </button>
+  </div>
+
+  <!-- Board -->
+  <div class="board" id="board">
+    <div class="state-box">
+      <span class="icon">🏆</span>
+      Select a game above to see the leaderboard
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let allEntries = [];
+  let currentGame = '';
+
+  async function fetchEntries() {
+    const res = await fetch('/api/leaderboard');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load');
+    return data.entries;
+  }
+
+  function parseScore(scoreStr) {
+    // "8/10" → 80.0 (percentage for sorting)
+    if (!scoreStr) return 0;
+    const parts = scoreStr.split('/');
+    if (parts.length === 2) {
+      const num = parseFloat(parts[0]);
+      const den = parseFloat(parts[1]);
+      if (den > 0) return (num / den) * 100;
+    }
+    return parseFloat(scoreStr) || 0;
+  }
+
+  function rankClass(i) {
+    if (i === 0) return 'rank-1';
+    if (i === 1) return 'rank-2';
+    if (i === 2) return 'rank-3';
+    return '';
+  }
+
+  function rankBadge(i) {
+    if (i === 0) return '🥇';
+    if (i === 1) return '🥈';
+    if (i === 2) return '🥉';
+    return `#${i + 1}`;
+  }
+
+  function renderBoard(entries) {
+    const board = document.getElementById('board');
+
+    if (!entries.length) {
+      board.innerHTML = `<div class="state-box"><span class="icon">😶</span>No entries yet for this game</div>`;
+      return;
+    }
+
+    // Sort by score descending, then by timestamp ascending (earlier = better tiebreak)
+    const sorted = [...entries].sort((a, b) => {
+      const diff = parseScore(b.score) - parseScore(a.score);
+      if (diff !== 0) return diff;
+      return new Date(a.timestamp) - new Date(b.timestamp);
+    });
+
+    board.innerHTML = sorted.map((e, i) => `
+      <div class="entry ${rankClass(i)}" style="animation-delay:${i * 0.04}s">
+        <div class="rank-badge">${rankBadge(i)}</div>
+        <div class="entry-info">
+          <div class="entry-name">${escHtml(e.name)}</div>
+        </div>
+        <div class="entry-score">${escHtml(e.score)}</div>
+      </div>
+    `).join('');
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async function loadBoard() {
+    const sel = document.getElementById('game-select');
+    const game = sel.value;
+    const board = document.getElementById('board');
+    const stats = document.getElementById('stats-label');
+    const refreshBtn = document.getElementById('refresh-btn');
+
+    if (!game) {
+      refreshBtn.style.display = 'none';
+      stats.textContent = 'Choose a game to view rankings';
+      board.innerHTML = `<div class="state-box"><span class="icon">🏆</span>Select a game above to see the leaderboard</div>`;
+      return;
+    }
+
+    currentGame = game;
+    refreshBtn.style.display = 'flex';
+    refreshBtn.classList.add('spinning');
+    stats.textContent = 'Loading…';
+    board.innerHTML = `<div class="state-box"><span class="icon">⏳</span>Fetching scores…</div>`;
+
+    try {
+      allEntries = await fetchEntries();
+      const filtered = allEntries.filter(e => e.game === game);
+      const count = filtered.length;
+      stats.textContent = count === 0
+        ? 'No entries yet'
+        : `${count} player${count !== 1 ? 's' : ''} · sorted by score`;
+      renderBoard(filtered);
+    } catch(err) {
+      stats.textContent = 'Error loading data';
+      board.innerHTML = `<div class="state-box"><span class="icon">❌</span>${escHtml(err.message)}</div>`;
+    } finally {
+      refreshBtn.classList.remove('spinning');
+    }
+  }
+</script>
+
+</body>
+</html>
