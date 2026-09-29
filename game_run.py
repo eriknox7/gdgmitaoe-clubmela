@@ -278,6 +278,26 @@ def proxy_fetch(slot, path):
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
+@app.route("/")
+def index():
+    links = "".join(
+        f'<a href="/game/{gid}" style="display:block;margin:10px 0;padding:14px 18px;'
+        f'border-radius:12px;background:{g["color"]};color:#fff;text-decoration:none;'
+        f'font-weight:800">{g["icon"]} {g["name"]}</a>'
+        for gid, g in GAMES.items()
+    )
+    return (
+        '<!DOCTYPE html><html><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        '<title>Club Mela Games</title></head>'
+        '<body style="font-family:sans-serif;background:#0d0d0d;color:#fff;'
+        'max-width:420px;margin:0 auto;padding:24px">'
+        '<h1>🎮 Club Mela Games</h1>' + links +
+        '<a href="/leaderboard" style="display:block;margin-top:20px;color:#FBBC05">'
+        '🏆 Leaderboard</a></body></html>'
+    )
+
+
 @app.route("/game/<game_id>")
 def game(game_id):
     if game_id not in GAMES:
