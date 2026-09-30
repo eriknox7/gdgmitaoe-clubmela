@@ -96,7 +96,7 @@ GAMES = {
     "passwordfinder": {
         "name":  "Password Finder",
         "type":  "proxy",
-        "url":   "https://notlocalhost.yashraj221b.me/password-game/",
+        "url":   "https://notlocal.sahayakapp.dev/password-game/",
         "icon":  "🔐",
         "color": "#EA4335",
     },
